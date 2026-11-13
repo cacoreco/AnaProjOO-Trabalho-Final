@@ -33,28 +33,19 @@ setup/install-ollama.sh
 
 Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (4096 tokens) e **corta o prompt em silêncio** quando ela estoura, o que apagaria as regras dos agentes. O `Modelfile` fixa `num_ctx 8192`. O CrewAI fala com o Ollama por um endereço que não permite ajustar esse valor por requisição, então a configuração precisa estar no modelo.
 
-### 5. Ambiente Python 3.12
+### 2. Ambiente Python 3.12
 
-```bash
-uv venv --python 3.12 .venv
+```shell
+setup/configure-python.sh
+```
+
+### 3. Ativar o ambiente virtual python
+
+```shell
 source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
-python --version                     # deve mostrar Python 3.12.x
-uv pip install -r requirements.txt
 ```
 
 Todo terminal novo precisa repetir o `source .venv/bin/activate`. O prompt passa a mostrar `(.venv)`.
-
-### 6. Conferir a instalação
-
-```bash
-# o pacote enxerga a pasta de prompts?
-python -c "from agente.prompts import carregar_fatos; print(len(carregar_fatos()), 'caracteres')"
-
-# o Ollama responde com o modelo certo?
-curl http://localhost:11434/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"qwen2.5-3b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}'
-```
 
 ## Executar
 
@@ -80,6 +71,9 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 │   ├── tutor.md
 │   ├── inquiridor.md
 │   └── guardiao.md
+├── setup/                    # scripts de configuração
+│   ├── configure-python.sh
+│   └── install-ollama.sh
 └── tests/
     ├── cenarios.py           # roteiro de cenários de teste
     └── resultados/           # uma rodada por arquivo (iteracao1.md, iteracao2.md...)
