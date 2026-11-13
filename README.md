@@ -23,35 +23,13 @@ Trabalho final de ELC1070 – Análise e Projeto de Sistemas OO (UFSM).
 
 ## Preparar o ambiente
 
-### 1. Pacotes do sistema
+### 1. Preparar o Ollama
 
-```bash
-sudo pacman -S git uv ollama
+```shell
+setup/install-ollama.sh
 ```
 
 `uv` é o gerenciador que instala o Python 3.12 sem mexer no Python do sistema. Com placa de vídeo existem variantes do pacote do Ollama (por exemplo, `ollama-cuda` para NVIDIA); sem GPU, o pacote `ollama` basta.
-
-### 2. Iniciar o Ollama
-
-```bash
-sudo systemctl enable --now ollama   # inicia agora e em todo boot
-systemctl status ollama              # deve mostrar "active (running)"
-```
-
-### 3. Clonar o repositório
-
-```bash
-git clone https://github.com/cacoreco/AnaProjOO-Trabalho-Final
-cd ~/AnaProjOO-Trabalho-Final
-```
-
-### 4. Baixar o modelo e criar a variante com contexto de 8192
-
-```bash
-ollama pull qwen2.5:3b
-ollama create qwen2.5-3b-8k -f Modelfile
-ollama list                          # deve listar qwen2.5-3b-8k e qwen2.5:3b
-```
 
 Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (4096 tokens) e **corta o prompt em silêncio** quando ela estoura, o que apagaria as regras dos agentes. O `Modelfile` fixa `num_ctx 8192`. O CrewAI fala com o Ollama por um endereço que não permite ajustar esse valor por requisição, então a configuração precisa estar no modelo.
 
