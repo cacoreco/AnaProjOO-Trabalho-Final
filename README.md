@@ -39,13 +39,7 @@ Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (409
 scripts/2.setup-agente.sh
 ```
 
-### 3. Interface Web (Opcional)
-
-```shell
-scripts/3.setup-gradio.sh
-```
-
-### 4. Ativar o ambiente virtual python
+### 3. Ativar o ambiente virtual python
 
 ```shell
 source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
@@ -66,9 +60,7 @@ python -m tests.cenarios                               # roda os cenários do ro
 ### Método 2: Pela Interface Web
 
 ```shell
-cd frontend
-source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
-python __main.py__
+python -m frontend
 ```
 
 Acessar http://localhost:7860
