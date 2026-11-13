@@ -41,8 +41,8 @@ systemctl status ollama              # deve mostrar "active (running)"
 ### 3. Clonar o repositório
 
 ```bash
-git clone <URL-DO-REPOSITORIO>
-cd <PASTA-DO-REPOSITORIO>
+git clone https://github.com/cacoreco/AnaProjOO-Trabalho-Final
+cd ~/AnaProjOO-Trabalho-Final
 ```
 
 ### 4. Baixar o modelo e criar a variante com contexto de 8192
