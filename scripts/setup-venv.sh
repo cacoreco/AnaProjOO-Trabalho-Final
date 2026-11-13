@@ -12,7 +12,7 @@ uv venv --python 3.12 .venv
 source .venv/bin/activate
 
 # instala os requisitos
-uv pip install -r requirements.txt
+uv pip install -r lib/requirements.txt
 
 # testar se deu certo
 python -c "from agente.prompts import carregar_fatos; print(len(carregar_fatos()), 'caracteres')"

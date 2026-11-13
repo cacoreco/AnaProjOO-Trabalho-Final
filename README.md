@@ -26,7 +26,7 @@ Trabalho final de ELC1070 – Análise e Projeto de Sistemas OO (UFSM).
 ### 1. Preparar o Ollama
 
 ```shell
-setup/install-ollama.sh
+scripts/install-ollama.sh
 ```
 
 `uv` é o gerenciador que instala o Python 3.12 sem mexer no Python do sistema. Com placa de vídeo existem variantes do pacote do Ollama (por exemplo, `ollama-cuda` para NVIDIA); sem GPU, o pacote `ollama` basta.
@@ -36,7 +36,7 @@ Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (409
 ### 2. Ambiente Python 3.12
 
 ```shell
-setup/configure-python.sh
+scripts/setup-venv.sh
 ```
 
 ### 3. Ativar o ambiente virtual python
@@ -71,7 +71,7 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 │   ├── tutor.md
 │   ├── inquiridor.md
 │   └── guardiao.md
-├── setup/                    # scripts de configuração
+├── scripts/                  # scripts de configuração
 │   ├── configure-python.sh
 │   └── install-ollama.sh
 └── tests/
