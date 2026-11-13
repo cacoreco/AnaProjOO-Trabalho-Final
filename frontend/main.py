@@ -12,8 +12,8 @@ interface = gr.Interface(
         "Como o padrão Memento costuma ser aplicado de forma errada? Dê um exemplo de uso equivocado e explique como corrigir",
         "Com qual padrão o Memento é mais confundido? Explique a diferença entre eles e por que essa confusão acontece."
     ],
-    inputs=[gr.Textbox(label="Insira o seu Prompt")],
-    outputs=gr.Textbox(label="Resposta (Aguardar alguns minutos)")
+    inputs=[gr.Textbox(lines=4, label="Prompt", placeholder="Digite seu prompt aqui")],
+    outputs=gr.Textbox(lines=16, label="Resposta", placeholder="A resposta pode demorar alguns minutos")
 )
 
 interface.launch()
