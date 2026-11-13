@@ -26,7 +26,7 @@ Trabalho final de ELC1070 – Análise e Projeto de Sistemas OO (UFSM).
 ### 1. Preparar o Ollama
 
 ```shell
-scripts/install-ollama.sh
+scripts/1.install-ollama.sh
 ```
 
 `uv` é o gerenciador que instala o Python 3.12 sem mexer no Python do sistema. Com placa de vídeo existem variantes do pacote do Ollama (por exemplo, `ollama-cuda` para NVIDIA); sem GPU, o pacote `ollama` basta.
@@ -36,10 +36,16 @@ Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (409
 ### 2. Ambiente Python 3.12
 
 ```shell
-scripts/setup-venv.sh
+scripts/2.setup-agente.sh
 ```
 
-### 3. Ativar o ambiente virtual python
+### 3. Interface Web (Opcional)
+
+```shell
+scripts/3.setup-gradio.sh
+```
+
+### 4. Ativar o ambiente virtual python
 
 ```shell
 source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
@@ -49,11 +55,23 @@ Todo terminal novo precisa repetir o `source .venv/bin/activate`. O prompt passa
 
 ## Executar
 
-```bash
+### Método 1: Pela CLI
+
+```shell
 python -m agente "Explique o que é o padrão Memento"   # uma pergunta, imprime a resposta e encerra
 python -m agente                                       # modo conversa (digite 'sair' para encerrar)
 python -m tests.cenarios                               # roda os cenários do roteiro e salva em tests/resultados/
 ```
+
+### Método 2: Pela Interface Web
+
+```shell
+cd frontend
+source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
+python __main.py__
+```
+
+Acessar http://localhost:7860
 
 Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite arquivos** enquanto eles rodam, porque cada cenário relê os prompts.
 
@@ -61,11 +79,14 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 
 ```
 ├── Modelfile                 # variante do modelo com contexto de 8192
-├── requirements.txt          # dependências com versões fixadas
+├── lib/
+│   └── requirements.txt      # dependências com versões fixadas
 ├── agente/
 │   ├── __main__.py           # CLI: python -m agente
 │   ├── sistema.py            # os três agentes, as tarefas e o tratamento de erros
 │   └── prompts.py            # lê os prompts e o arquivo de fatos
+├── frontend/
+│   └── __main__.py           # Interface Web
 ├── prompts/
 │   ├── memento_fatos.md      # fonte de verdade sobre o Memento
 │   ├── tutor.md
