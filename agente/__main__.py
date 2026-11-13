@@ -1,20 +1,27 @@
 """Ponto de entrada: python -m agente "pergunta"   ou   python -m agente (modo conversa)."""
 import logging
 import sys
-
 from .sistema import SistemaTutor
 
-
-def main() -> None:
+def inicializa_sistema():
     logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI
     try:
         sistema = SistemaTutor()
+        return sistema
     except (OSError, ValueError) as erro:  # prompt ou arquivo de fatos ausente/inválido
+        return None
+
+def resposta(prompt, sistema):
+    return sistema.resposta(" ".join(prompt))
+
+def main() -> None:
+    sistema = inicializa_sistema()
+    if sistema is None:
         print(f"Erro ao iniciar o sistema: {erro}")
         sys.exit(1)
 
     if len(sys.argv) > 1:  # modo comando único: imprime a resposta e encerra
-        print(sistema.resposta(" ".join(sys.argv[1:])))
+        print(resposta(sys.argv[1:], sistema))
         return
 
     print("Sistema pedagógico: padrão Memento.")
