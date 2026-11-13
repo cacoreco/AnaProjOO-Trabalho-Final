@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 # Script auxiliar para facilitar a configuração do ollama
 #   Requisitos: archlinux com systemd
@@ -25,6 +25,11 @@ sudo systemctl enable --now ollama || {
     echo "Falha ao iniciar o ollama."
     exit 1
 }
+
+# Instala os modelos
+ollama pull qwen2.5:3b
+ollama create qwen2.5-3b-8k -f Modelfile
+ollama list     # deve listar qwen2.5-3b-8k e qwen2.5:3b
 
 # Conferir a instalação
 curl http://localhost:11434/v1/chat/completions \
