@@ -1,10 +1,10 @@
 import gradio as gr
 
-def reverse_text(text):
+def resposta(text):
     return NotImplementedError("Não implementado ainda")
 
 interface = gr.Interface(
-    fn=reverse_text,
+    fn=resposta,
     inputs=[gr.Textbox(label="Insira o seu Prompt")],
     outputs=gr.Textbox(label="Resposta (Aguardar alguns minutos)")
 )
