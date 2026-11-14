@@ -68,8 +68,8 @@ alias venv "source .venv/bin/activate.fish"
 ### Método 1: Pela CLI
 
 ```shell
-python -m agente "Explique o que é o padrão Memento"   # uma pergunta, imprime a resposta e encerra
-python -m agente                                       # modo conversa (digite 'sair' para encerrar)
+python -m agent "Explique o que é o padrão Memento"    # uma pergunta, imprime a resposta e encerra
+python -m agent                                        # modo conversa (digite 'sair' para encerrar)
 python -m tests.cenarios                               # roda os cenários do roteiro e salva em tests/resultados/
 ```
 
@@ -89,8 +89,8 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 ├── Modelfile                   # variante do modelo com contexto de 8192
 ├── lib/
 │   └── requirements.txt        # dependências com versões fixadas
-├── agente/
-│   ├── __main__.py             # CLI: python -m agente
+├── agent/
+│   ├── __main__.py             # CLI: python -m agent
 │   ├── sistema.py              # os três agentes, as tarefas e o tratamento de erros
 │   └── prompts.py              # lê os prompts e o arquivo de fatos
 ├── docs/

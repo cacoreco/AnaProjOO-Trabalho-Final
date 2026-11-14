@@ -1,13 +1,13 @@
 import gradio as gr
 
-import agente
+import agent
 
 def resposta(prompt):
-    sistema = agente.inicializa_sistema()
+    sistema = agent.inicializa_sistema()
     if sistema is None:
         return Exception("Erro ao conectar ao agente")
 
-    return agente.resposta(prompt, sistema)
+    return agent.resposta(prompt, sistema)
 
 interface = gr.Interface(
     fn=resposta,

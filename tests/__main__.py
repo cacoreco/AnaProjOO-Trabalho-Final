@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from agente.sistema import SistemaTutor
+from agent.sistema import SistemaTutor
 
 CENARIOS = [
     ("Conceitual", "Explique o que é o padrão Memento e qual problema ele resolve."),
