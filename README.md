@@ -47,6 +47,22 @@ source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
 
 Todo terminal novo precisa repetir o `source .venv/bin/activate`. O prompt passa a mostrar `(.venv)`.
 
+#### Dica: Definir alias de comando para iniciar venv (opcional)
+
+Definir um alias para iniciar o ambiente virtual apenas digitando `venv` no terminal.
+
+##### Bash e Zsh
+Adicionar o seguinte código ao seu `.bashrc` ou `.zshrc`:
+```shell
+alias venv="source .venv/bin/activate"
+```
+
+##### Fish
+Adicionar o seguinte código ao seu `.config/fish/config.fish`:
+```shell
+alias venv "source .venv/bin/activate.fish"
+```
+
 ## Executar
 
 ### Método 1: Pela CLI
