@@ -86,27 +86,27 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 ## Estrutura do projeto
 
 ```shell
-├── Modelfile                 # variante do modelo com contexto de 8192
+├── Modelfile                   # variante do modelo com contexto de 8192
 ├── lib/
-│   └── requirements.txt      # dependências com versões fixadas
+│   └── requirements.txt        # dependências com versões fixadas
 ├── agente/
-│   ├── __main__.py           # CLI: python -m agente
-│   ├── sistema.py            # os três agentes, as tarefas e o tratamento de erros
-│   └── prompts.py            # lê os prompts e o arquivo de fatos
+│   ├── __main__.py             # CLI: python -m agente
+│   ├── sistema.py              # os três agentes, as tarefas e o tratamento de erros
+│   └── prompts.py              # lê os prompts e o arquivo de fatos
 ├── docs/
-│   └── resultados/           # resultados em markdown dos testes
+│   └── resultados/             # resultados em markdown dos testes
 ├── frontend/
-│   └── __main__.py           # Interface Web
+│   └── __main__.py             # Interface Web
 ├── prompts/
-│   ├── memento_fatos.md      # fonte de verdade sobre o Memento
-│   ├── tutor.md
-│   ├── inquiridor.md
-│   └── guardiao.md
-├── scripts/                  # scripts de configuração
-│   ├── configure-python.sh
-│   └── install-ollama.sh
+│   ├── memento_fatos.md        # fonte de verdade sobre o Memento
+│   ├── tutor.md                # instruções de explicação
+│   ├── inquiridor.md           # instruções de pergunta
+│   └── guardiao.md             # instruções de revisão
+├── scripts/
+│   ├── configure-python.sh     # configura  o ambiente virtual
+│   └── install-ollama.sh       # instala o ollama e os modelos
 └── tests/
-    └── cenarios.py           # roteiro de cenários de teste
+    └── __main__.py             # roteiro de cenários de teste
 ```
 
 ## Problemas comuns
@@ -123,5 +123,5 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 
 - Rode `git pull` antes de começar e faça commits pequenos, com mensagem clara.
 - **Evite editar o mesmo arquivo ao mesmo tempo**, principalmente os de `prompts/`. Combinem quem mexe em qual.
-- Depois de cada mudança nos prompts ou no código, rode os cenários e salve o resultado em `tests/resultados/` com um nome novo. É a evidência para o relatório.
+- Depois de cada mudança nos prompts ou no código, rode os cenários. O resultado será salvo em `docs/resultados`. É a evidência para o relatório.
 - Nunca coloque chave de API, senha ou token no repositório. O projeto não precisa de nenhum.
