@@ -17,7 +17,7 @@ def resposta(prompt, sistema):
 def main() -> None:
     sistema = inicializa_sistema()
     if sistema is None:
-        print(f"Erro ao iniciar o sistema: {erro}")
+        print("Erro ao iniciar o sistema")
         sys.exit(1)
 
     if len(sys.argv) > 1:  # modo comando único: imprime a resposta e encerra

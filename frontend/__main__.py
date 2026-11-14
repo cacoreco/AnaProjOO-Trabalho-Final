@@ -3,7 +3,11 @@ import gradio as gr
 import agente
 
 def resposta(prompt):
-    return NotImplementedError("Não implementado ainda")
+    sistema = agente.inicializa_sistema()
+    if sistema is None:
+        return "Erro ao iniciar o sistema"
+
+    return agente.resposta(prompt, sistema)
 
 interface = gr.Interface(
     fn=resposta,
