@@ -22,4 +22,5 @@ interface = gr.Interface(
     outputs=gr.Textbox(lines=16, label="Resposta", placeholder="A resposta pode demorar alguns minutos")
 )
 
-interface.launch()
+if __name__ == "__main__":
+    interface.launch()
