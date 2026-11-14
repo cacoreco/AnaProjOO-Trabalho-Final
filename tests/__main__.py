@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from agent.sistema import SistemaTutor
+import agent
 
 CENARIOS = [
     ("Conceitual", "Explique o que é o padrão Memento e qual problema ele resolve."),
@@ -23,7 +23,7 @@ def main() -> None:
     linhas = [f"# Resultados dos cenários - {datetime.now():%d/%m/%Y %H:%M}", ""]
 
     for nome, pergunta in CENARIOS:
-        sistema = SistemaTutor()  # conversa nova por cenário: um não contamina o outro
+        sistema = agent.inicializa_sistema()  # conversa nova por cenário: um não contamina o outro
         inicio = time.time()
         resposta = sistema.resposta(pergunta)
         duracao = time.time() - inicio
