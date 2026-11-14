@@ -85,7 +85,7 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 
 ## Estrutura do projeto
 
-```
+```shell
 ├── Modelfile                 # variante do modelo com contexto de 8192
 ├── lib/
 │   └── requirements.txt      # dependências com versões fixadas
@@ -93,6 +93,8 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 │   ├── __main__.py           # CLI: python -m agente
 │   ├── sistema.py            # os três agentes, as tarefas e o tratamento de erros
 │   └── prompts.py            # lê os prompts e o arquivo de fatos
+├── docs/
+│   └── resultados/           # resultados em markdown dos testes
 ├── frontend/
 │   └── __main__.py           # Interface Web
 ├── prompts/
@@ -104,8 +106,7 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 │   ├── configure-python.sh
 │   └── install-ollama.sh
 └── tests/
-    ├── cenarios.py           # roteiro de cenários de teste
-    └── resultados/           # uma rodada por arquivo (iteracao1.md, iteracao2.md...)
+    └── cenarios.py           # roteiro de cenários de teste
 ```
 
 ## Problemas comuns
