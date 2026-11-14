@@ -5,7 +5,7 @@ import agente
 def resposta(prompt):
     sistema = agente.inicializa_sistema()
     if sistema is None:
-        return "Erro ao iniciar o sistema"
+        return Exception("Erro ao conectar ao agente")
 
     return agente.resposta(prompt, sistema)
 
