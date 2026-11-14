@@ -13,6 +13,7 @@
 # systemd é o daemon do sistema necessário
 command -v systemctl > /dev/null || {
     echo "É necessário o systemd para rodar esse script."
+    exit 1
 }
 
 # Instala os pacotes necessários
