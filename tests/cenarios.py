@@ -1,7 +1,3 @@
-"""Roda os cenários do roteiro (padrão Memento) e salva as respostas em tests/resultados/.
-
-Uso, na pasta do projeto:  python -m tests.cenarios
-"""
 import time
 from datetime import datetime
 from pathlib import Path
@@ -21,7 +17,7 @@ CENARIOS = [
 
 
 def main() -> None:
-    pasta = Path(__file__).parent / "resultados"
+    pasta = Path("docs/resultados")
     pasta.mkdir(exist_ok=True)
     arquivo = pasta / f"cenarios_{datetime.now():%Y%m%d_%H%M}.md"
     linhas = [f"# Resultados dos cenários - {datetime.now():%d/%m/%Y %H:%M}", ""]
