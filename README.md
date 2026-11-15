@@ -70,13 +70,13 @@ alias venv "source .venv/bin/activate.fish"
 ```shell
 python -m agent "Explique o que é o padrão Memento"    # uma pergunta, imprime a resposta e encerra
 python -m agent                                        # modo conversa (digite 'sair' para encerrar)
-python -m tests.cenarios                               # roda os cenários do roteiro e salva em tests/resultados/
+python -m tests                                        # roda os cenários do roteiro e salva em tests/resultados/
 ```
 
 ### Método 2: Pela Interface Web
 
 ```shell
-python -m frontend
+python -m gui
 ```
 
 Acessar http://localhost:7860
@@ -87,16 +87,16 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 
 ```shell
 ├── Modelfile                   # variante do modelo com contexto de 8192
-├── lib/
-│   └── requirements.txt        # dependências com versões fixadas
 ├── agent/
 │   ├── __main__.py             # CLI: python -m agent
 │   ├── sistema.py              # os três agentes, as tarefas e o tratamento de erros
 │   └── prompts.py              # lê os prompts e o arquivo de fatos
 ├── docs/
 │   └── resultados/             # resultados em markdown dos testes
-├── frontend/
+├── gui/
 │   └── __main__.py             # Interface Web
+├── lib/
+│   └── requirements.txt        # dependências com versões fixadas
 ├── prompts/
 │   ├── memento_fatos.md        # fonte de verdade sobre o Memento
 │   ├── tutor.md                # instruções de explicação
