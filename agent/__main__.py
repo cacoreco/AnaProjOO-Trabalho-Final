@@ -6,16 +6,23 @@
 
 import logging
 import sys
+import argparse
 
 from .sistema import SistemaTutor
 
-def inicializa_sistema():
-    
-    try:
-        sistema = SistemaTutor()
-        return sistema
-    except (OSError, ValueError) as erro:  # prompt ou arquivo de fatos ausente/inválido
-        return None
+def coletar_argumentos():
+    parser = argparse.ArgumentParser(
+        prog='Agente Memento',
+        description='Sistema multiagente em Python que ensina o padrão de projeto *Memento* (GoF) a um estudante iniciante.'
+    )
+
+    parser.add_argument("prompt")
+    parser.add_argument('-m', '--modelo', default="ollama/qwen2.5-3b-8k", help="modelo de linguagem a ser usado")
+    parser.add_argument('-t', '--temperatura', default=0.2, help="baixa: menos criatividade, menos invenção")
+    parser.add_argument('-j', '--janela', default=8192, help="tamanho da janela de contexto")
+    parser.add_argument('-p', '--porta', default=11434, help="porta a ser usada pelo servidor local")
+
+    return parser.parse_args()
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI
@@ -25,9 +32,12 @@ def main() -> None:
     except (OSError, ValueError) as erro:
         print(f"Erro ao iniciar o sistema: {erro}")
         sys.exit(1)
-        
-    
-    prompt = "".join(sys.argv[1:])
+
+    args = coletar_argumentos()
+
+    prompt = args.prompt
+
+    print(args)
 
     # Modo prompt pela CLI 
     if len(sys.argv) > 1:
@@ -38,7 +48,7 @@ def main() -> None:
         print("Sistema pedagógico: padrão Memento.")
         print("===================================")
         print()
-        print("Aperte 'Q' para sair.")
+        print("CTRL + C para sair.")
         print()
         while True:
             try:
