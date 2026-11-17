@@ -6,6 +6,7 @@
 
 import logging
 import sys
+
 from .sistema import SistemaTutor
 
 def inicializa_sistema():
@@ -17,7 +18,7 @@ def inicializa_sistema():
         return None
 
 def resposta(prompt, sistema):
-    return sistema.resposta(" ".join(prompt))
+    return sistema.resposta(prompt)
 
 def main() -> None:
     sistema = inicializa_sistema()
@@ -32,8 +33,12 @@ def main() -> None:
         print(resposta(prompt, sistema))
     # Modo conversa
     else:
+        print("===================================")
         print("Sistema pedagógico: padrão Memento.")
-        print("Digite 'sair' para encerrar.")
+        print("===================================")
+        print()
+        print("Aperte 'Q' para sair.")
+        print()
         while True:
             try:
                 pergunta = input("Você: ")
@@ -41,11 +46,13 @@ def main() -> None:
                 print()
                 break
 
-            comando = pergunta.strip().lower()
-
-            if comando in ["sair", "exit", "quit", "q"]:
+            if pergunta.strip().lower() in ["sair", "exit", "quit", "q"]:
                 break
+
             print(f"Sistema: {sistema.resposta(pergunta)}")
+        
+        print()
+        print("Saindo do sistema...")
 
 
 if __name__ == "__main__":
