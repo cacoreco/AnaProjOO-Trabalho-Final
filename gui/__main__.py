@@ -1,13 +1,18 @@
+import logging
 import gradio as gr
 
-import agent
+from agent.sistema import SistemaTutor
 
 def resposta(prompt):
-    sistema = agent.inicializa_sistema()
-    if sistema is None:
-        return Exception("Erro ao conectar ao agente")
+    logging.getLogger("crewai").setLevel(logging.ERROR)
 
-    return agent.resposta(prompt, sistema)
+    try:
+        sistema = SistemaTutor()
+    except (OSError, ValueError) as erro:
+        print(f"Erro ao iniciar o sistema: {erro}")
+        sys.exit(1)
+
+    return sistema.resposta(prompt)
 
 interface = gr.Interface(
     fn=resposta,

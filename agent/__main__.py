@@ -10,27 +10,28 @@ import sys
 from .sistema import SistemaTutor
 
 def inicializa_sistema():
-    logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI
+    
     try:
         sistema = SistemaTutor()
         return sistema
     except (OSError, ValueError) as erro:  # prompt ou arquivo de fatos ausente/inválido
         return None
 
-def resposta(prompt, sistema):
-    return sistema.resposta(prompt)
-
 def main() -> None:
-    sistema = inicializa_sistema()
-    if sistema is None:
-        print("Erro ao iniciar o sistema")
+    logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI
+
+    try:
+        sistema = SistemaTutor()
+    except (OSError, ValueError) as erro:
+        print(f"Erro ao iniciar o sistema: {erro}")
         sys.exit(1)
+        
     
-    prompt = sys.argv[1:]
+    prompt = "".join(sys.argv[1:])
 
     # Modo prompt pela CLI 
     if len(sys.argv) > 1:
-        print(resposta(prompt, sistema))
+        print(sistema.resposta(prompt))
     # Modo conversa
     else:
         print("===================================")
@@ -41,15 +42,15 @@ def main() -> None:
         print()
         while True:
             try:
-                pergunta = input("Você: ")
+                prompt = input("Você: ")
             except (EOFError, KeyboardInterrupt):
                 print()
                 break
 
-            if pergunta.strip().lower() in ["sair", "exit", "quit", "q"]:
+            if prompt.strip().lower() in ["sair", "exit", "quit", "q"]:
                 break
 
-            print(f"Sistema: {sistema.resposta(pergunta)}")
+            print(f"Sistema: {sistema.resposta(prompt)}")
         
         print()
         print("Saindo do sistema...")
