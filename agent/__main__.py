@@ -1,4 +1,9 @@
-"""Ponto de entrada: python -m agente "pergunta"   ou   python -m agente (modo conversa)."""
+# Ponto de entrada:
+#
+# python -m agent "pergunta"
+# OU
+# python -m agent (modo conversa)
+
 import logging
 import sys
 from .sistema import SistemaTutor
@@ -19,22 +24,28 @@ def main() -> None:
     if sistema is None:
         print("Erro ao iniciar o sistema")
         sys.exit(1)
+    
+    prompt = sys.argv[1:]
 
-    if len(sys.argv) > 1:  # modo comando único: imprime a resposta e encerra
-        print(resposta(sys.argv[1:], sistema))
-        return
+    # Modo prompt pela CLI 
+    if len(sys.argv) > 1:
+        print(resposta(prompt, sistema))
+    # Modo conversa
+    else:
+        print("Sistema pedagógico: padrão Memento.")
+        print("Digite 'sair' para encerrar.")
+        while True:
+            try:
+                pergunta = input("Você: ")
+            except (EOFError, KeyboardInterrupt):
+                print()
+                break
 
-    print("Sistema pedagógico: padrão Memento.")
-    print("Digite 'sair' para encerrar.")
-    while True:
-        try:
-            pergunta = input("Você: ")
-        except (EOFError, KeyboardInterrupt):
-            print()
-            break
-        if pergunta.strip().lower() == "sair":
-            break
-        print(f"Sistema: {sistema.resposta(pergunta)}")
+            comando = pergunta.strip().lower()
+
+            if comando in ["sair", "exit", "quit", "q"]:
+                break
+            print(f"Sistema: {sistema.resposta(pergunta)}")
 
 
 if __name__ == "__main__":
