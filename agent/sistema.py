@@ -1,15 +1,10 @@
-"""Orquestração da crew: Tutor -> Inquiridor -> Guardião, com modelo local (Ollama)."""
+#Orquestração da crew: Tutor -> Inquiridor -> Guardião, com modelo local (Ollama).
+
 import logging
 
 from crewai import LLM, Agent, Crew, Process, Task
 
 from .prompts import carregar_fatos, carregar_prompt
-
-# --- Configuração do modelo local (nada de API paga ou chave) -------------
-MODELO = "ollama/qwen2.5-3b-8k"        # variante criada com o Modelfile (num_ctx 8192)
-URL_OLLAMA = "http://localhost:11434"  # servidor local do Ollama
-JANELA_CONTEXTO = 8192                 # deve coincidir com o num_ctx do Modelfile
-TEMPERATURA = 0.2                      # baixa: menos criatividade, menos invenção
 
 # --- Limites para não estourar a janela de 8k ------------------------------
 TURNOS_NO_HISTORICO = 3                # quantos pares pergunta/resposta entram no prompt
@@ -26,17 +21,16 @@ MSG_SAIDA_INVALIDA = "Não consegui gerar uma resposta confiável agora. Tente r
 
 log = logging.getLogger(__name__)
 
-
 class SistemaTutor:
-    """Tutor multiagente do padrão Memento. Uma instância = uma conversa."""
+    #Tutor multiagente do padrão Memento. Uma instância = uma conversa.
 
-    def __init__(self) -> None:
+    def __init__(self, model, base_url, temperature, context_window_size) -> None:
         fatos = carregar_fatos()
         self._llm = LLM(
-            model=MODELO,
-            base_url=URL_OLLAMA,
-            temperature=TEMPERATURA,
-            context_window_size=JANELA_CONTEXTO,
+            model=model,
+            base_url=base_url,
+            temperature=temperature,
+            context_window_size=context_window_size,
         )
         self._tutor = self._criar_agente("tutor", fatos)
         self._inquiridor = self._criar_agente("inquiridor", fatos)

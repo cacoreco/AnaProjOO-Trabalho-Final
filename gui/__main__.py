@@ -1,13 +1,18 @@
 import logging
 import gradio as gr
+import argparse
 
 from agent.sistema import SistemaTutor
+from agent.__main__ import coletar_argumentos
 
 def resposta(prompt):
     logging.getLogger("crewai").setLevel(logging.ERROR)
 
+    args = coletar_argumentos()
+    url= f"http://localhost:{args.porta}"
+
     try:
-        sistema = SistemaTutor()
+        sistema = SistemaTutor(args.modelo, url, args.temperatura, args.janela)
     except (OSError, ValueError) as erro:
         print(f"Erro ao iniciar o sistema: {erro}")
         sys.exit(1)
