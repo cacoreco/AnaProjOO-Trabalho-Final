@@ -11,6 +11,7 @@ from colorama import Fore
 from .sistema import SistemaTutor
 from .aux import coletar_argumentos
 from .aux import porta_local
+from .aux import limpa_tela
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI
@@ -30,6 +31,8 @@ def main() -> None:
         print(sistema.resposta(prompt))
     # Modo conversa
     else:
+        limpa_tela()
+
         print(Fore.YELLOW + "===================================" + Fore.RESET)
         print(Fore.YELLOW + "Sistema pedagógico: padrão Memento." + Fore.RESET)
         print(Fore.YELLOW + "===================================" + Fore.RESET)

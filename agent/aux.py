@@ -1,4 +1,5 @@
 import argparse
+import os
 
 def coletar_argumentos():
     parser = argparse.ArgumentParser(
@@ -16,3 +17,6 @@ def coletar_argumentos():
 
 def porta_local(porta):
     return f"http://localhost:{porta}"
+
+def limpa_tela():
+    os.system("clear")
