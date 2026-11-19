@@ -10,6 +10,8 @@ Trabalho final de ELC1070 – Análise e Projeto de Sistemas OO (UFSM).
 - **Framework:** [CrewAI](https://docs.crewai.com/). Usa vários agentes colaborativos.
 - **Três agentes em sequência:** Tutor (explica) → Inquiridor (pergunta e avalia) → Guardião (revisa e aplica as regras anti-alucinação).
 - **Fonte de verdade:** `prompts/memento_fatos.md`. É o único conteúdo sobre o Memento que os agentes podem usar.
+- **CLI configurável:** Capacidade de especificar modelo, temperatura e outros pela linha de comando.
+- **Interface Web Simples:** Alternativa à versão por linha de comando.
 - **Instalação automatizada:** Scripts prontos para instalação e setup na pasta `scripts`.
 
 ## Requisitos
@@ -79,6 +81,14 @@ python -m agent "Explique o que é o padrão Memento"    # uma pergunta, imprime
 python -m agent                                        # modo conversa (digite 'sair' para encerrar)
 python -m tests                                        # roda os cenários do roteiro e salva em tests/resultados/
 ```
+
+#### Opções
+
+-h              --help                        mostrar ajuda
+-m MODELO       --modelo MODELO               modelo de linguagem a ser usado
+-t TEMPERATURA  --temperatura TEMPERATURA     baixa: menos criatividade, menos invenção
+-j JANELA       --janela JANELA               tamanho da janela de contexto
+-p PORTA        --porta PORTA                 porta a ser usada pelo servidor local
 
 ### Método 2: Pela Interface Web
 

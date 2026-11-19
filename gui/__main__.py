@@ -6,7 +6,7 @@ from agent.sistema import SistemaTutor
 from agent.aux import coletar_argumentos
 from agent.aux import porta_local
 
-def resposta(prompt):
+def main(prompt):
     logging.getLogger("crewai").setLevel(logging.ERROR)
 
     args = coletar_argumentos()
@@ -21,7 +21,7 @@ def resposta(prompt):
     return sistema.resposta(prompt)
 
 interface = gr.Interface(
-    fn=resposta,
+    fn=main,
     title="Agente Tutor Padrão Memento",
     description="Sistema multiagente em Python que ensina o padrão de projeto *Memento* (GoF) a um estudante iniciante.",
     examples=[
