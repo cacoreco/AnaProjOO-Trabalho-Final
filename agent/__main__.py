@@ -6,6 +6,7 @@
 
 import logging
 import sys
+from colorama import Fore
 
 from .sistema import SistemaTutor
 from .aux import coletar_argumentos
@@ -29,15 +30,15 @@ def main() -> None:
         print(sistema.resposta(prompt))
     # Modo conversa
     else:
-        print("===================================")
-        print("Sistema pedagógico: padrão Memento.")
-        print("===================================")
+        print(Fore.YELLOW + "===================================" + Fore.RESET)
+        print(Fore.YELLOW + "Sistema pedagógico: padrão Memento." + Fore.RESET)
+        print(Fore.YELLOW + "===================================" + Fore.RESET)
         print()
-        print("CTRL + C para sair.")
+        print(Fore.LIGHTBLACK_EX + "`CTRL + C` para sair." + Fore.RESET)
         print()
         while True:
             try:
-                prompt = input("Você: ")
+                prompt = input(Fore.BLUE + "Você: " + Fore.RESET)
             except (EOFError, KeyboardInterrupt):
                 print()
                 break
@@ -45,10 +46,10 @@ def main() -> None:
             if prompt.strip().lower() in ["sair", "exit", "quit", "q"]:
                 break
 
-            print(f"Sistema: {sistema.resposta(prompt)}")
+            print(Fore.RED + "Sistema: " + Fore.RESET + sistema.resposta(prompt))
         
         print()
-        print("Saindo do sistema...")
+        print(Fore.LIGHTBLACK_EX + "Saindo do sistema..." + Fore.RESET)
 
 
 if __name__ == "__main__":

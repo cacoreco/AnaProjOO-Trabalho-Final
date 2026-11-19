@@ -14,6 +14,7 @@ source .venv/bin/activate
 # instala os requisitos
 uv pip install -r lib/requirements.txt
 uv pip install gradio
+uv pip install colorama
 
 # testar se deu certo
 python -c "from agente.prompts import carregar_fatos; print(len(carregar_fatos()), 'caracteres')"
