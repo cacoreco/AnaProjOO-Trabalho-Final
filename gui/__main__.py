@@ -1,11 +1,12 @@
 import logging
 import gradio as gr
+import sys
 
 from agent.sistema import SistemaTutor
 from agent.aux import coletar_argumentos
 from agent.aux import porta_local
 
-def resposta(prompt):
+def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)
 
     args = coletar_argumentos()
@@ -13,13 +14,12 @@ def resposta(prompt):
 
     try:
         sistema = SistemaTutor(args.modelo, url, args.temperatura, args.janela)
-        return sistema.resposta(prompt)
     except (OSError, ValueError) as erro:
-        return f"Erro ao iniciar o sistema: {erro}"
+        print(f"Erro ao iniciar o sistema: {erro}")
+        sys.exit(1)
 
-def main() -> None:
     interface = gr.Interface(
-        fn=resposta,
+        fn=sistema.resposta,
         title="Agente Tutor Padrão Memento",
         description="Sistema multiagente em Python que ensina o padrão de projeto *Memento* (GoF) a um estudante iniciante.",
         examples=[
