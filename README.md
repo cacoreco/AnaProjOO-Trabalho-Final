@@ -106,27 +106,29 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 ## Estrutura do projeto
 
 ```shell
-├── Modelfile                   # variante do modelo com contexto de 8192
 ├── agent/
-│   ├── __main__.py             # CLI: python -m agent
-│   ├── sistema.py              # os três agentes, as tarefas e o tratamento de erros
-│   └── prompts.py              # lê os prompts e o arquivo de fatos
+│   ├── __main__.py           # CLI: python -m agent
+|   ├── aux.py                # funções auxiliares
+|   ├── guardrails.py         # tratamento de prompts inválidos
+│   ├── prompts.py            # lê os prompts e o arquivo de fatos
+│   └── sistema.py            # os três agentes, as tarefas e o tratamento de erros
 ├── docs/
-│   └── resultados/             # resultados em markdown dos testes
+│   └── resultados/           # resultados em markdown dos testes
 ├── gui/
-│   └── __main__.py             # Interface Web
+│   └── __main__.py           # interface Web
 ├── lib/
-│   └── requirements.txt        # dependências com versões fixadas
+│   └── requirements.txt      # dependências com versões fixadas
 ├── prompts/
-│   ├── memento_fatos.md        # fonte de verdade sobre o Memento
-│   ├── tutor.md                # instruções de explicação
-│   ├── inquiridor.md           # instruções de pergunta
-│   └── guardiao.md             # instruções de revisão
+│   ├── memento_fatos.md      # fonte de verdade sobre o Memento
+│   ├── tutor.md              # instruções de explicação
+│   ├── inquiridor.md         # instruções de pergunta
+│   └── guardiao.md           # instruções de revisão
 ├── scripts/
-│   ├── configure-python.sh     # configura  o ambiente virtual
-│   └── install-ollama.sh       # instala o ollama e os modelos
-└── tests/
-    └── __main__.py             # roteiro de cenários de teste
+│   ├── 1.install-ollama.sh   # instala o ollama e os modelos
+│   └── 2.setup-agente.sh     # configura o python e o ambiente
+├── tests/
+│   └── __main__.py           # roteiro de cenários de teste
+└── .modelfile                # variante do modelo com janela de contexto de 8192
 ```
 
 ## Problemas comuns
