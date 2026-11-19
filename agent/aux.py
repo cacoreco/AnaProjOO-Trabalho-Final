@@ -1,3 +1,5 @@
+# Esse é um módulo apenas para funções auxiliares para uso em outros locais
+
 import argparse
 import os
 
@@ -19,4 +21,7 @@ def porta_local(porta):
     return f"http://localhost:{porta}"
 
 def limpa_tela():
-    os.system("clear")
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
