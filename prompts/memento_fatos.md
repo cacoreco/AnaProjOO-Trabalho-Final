@@ -3,16 +3,17 @@ FATOS SOBRE O PADRÃO MEMENTO (GoF)
 PADRÃO MEMENTO: comportamental, de objeto.
 Intenção: sem violar o encapsulamento, capturar e externalizar o estado interno de um objeto para que ele possa ser restaurado depois.
 Participantes:
-- Originator (nos slides da disciplina, "Fonte"): tem acesso total ao próprio estado. Cria o Memento com um snapshot desse estado e o usa para restaurá-lo. É o ÚNICO que lê o conteúdo do Memento.
+- Originator: tem acesso total ao próprio estado. Cria o Memento com um snapshot desse estado e o usa para restaurá-lo. É o ÚNICO que lê o conteúdo do Memento.
 - Memento: guarda o snapshot do estado. Tem interface estreita (narrow) para o Caretaker, que é VAZIA (sem métodos para ler, salvar ou restaurar), e interface larga (wide) para o Originator. Salvar e restaurar são métodos do Originator, não do Memento.
 - Caretaker: guarda e devolve mementos (por exemplo, uma pilha de undo). NUNCA lê nem altera o conteúdo do Memento.
 Quando usar: é preciso restaurar um estado anterior E o acesso direto ao estado (getters e setters) violaria o encapsulamento.
 Consequências positivas: preserva o encapsulamento; simplifica o Originator, que não precisa gerenciar o histórico.
 Consequências negativas: custo de memória e de cópia se o estado é grande ou os snapshots são frequentes; o Caretaker precisa de uma política de descarte dos mementos antigos.
+ATENÇÃO: gastar muita memória é um CUSTO do padrão (consequência negativa). Não é violação de encapsulamento e não é um uso incorreto.
 Quando evitar: estado muito grande salvo com muita frequência; ou quando basta uma operação inversa simples (considerar Command).
 Exemplo de quando usar: editor de texto com desfazer, em que o texto do Editor é private.
 Exemplo de quando evitar: salvar o texto inteiro de um arquivo muito grande a cada tecla digitada gasta muita memória; alternativa: Command, guardando só a operação e a inversa.
-Erros comuns:
+Uso incorreto (erros comuns de implementação):
 - Expor getters ou setters do estado no Memento (por exemplo, um getTexto() público): o Caretaker passa a ler o estado e o encapsulamento é violado. Correção: o Memento não tem métodos públicos de leitura; só o Originator lê.
 - Memento e Originator compartilharem a MESMA referência a um objeto mutável (por exemplo, uma lista), sem copiar: se o Originator alterar a lista depois, o snapshot muda junto. Correção: copiar ao salvar E ao restaurar. Com String não há esse problema, porque String é imutável.
 - Guardar snapshots sem limite.
