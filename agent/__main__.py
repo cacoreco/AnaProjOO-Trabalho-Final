@@ -49,11 +49,14 @@ def main() -> None:
             if prompt.strip().lower() in ["sair", "exit", "quit", "q"]:
                 break
 
-            print(Fore.RED + "Sistema: " + Fore.RESET + sistema.resposta(prompt))
+            resposta = sistema.resposta(prompt)
+            if resposta == "AÇÃO INTERROMPIDA":
+                break
+
+            print(Fore.RED + "Sistema: " + Fore.RESET + resposta)
         
         print()
         print(Fore.LIGHTBLACK_EX + "Saindo do sistema..." + Fore.RESET)
-
 
 if __name__ == "__main__":
     main()

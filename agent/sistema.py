@@ -155,30 +155,33 @@ class SistemaTutor:
     def _saida_valida(texto: str) -> bool:
         return len(texto) >= 15  # descarta saída vazia ou truncada demais
 
+    # Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final.
     def resposta(self, pergunta: str) -> str:
-        """Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final."""
-        pergunta = (pergunta or "").strip()
-        if not pergunta:                          # tratamento: entrada vazia
-            return MSG_VAZIA
-        pergunta = pergunta[:MAX_CHARS_ENTRADA]   # tratamento: entrada longa demais
-        self.ultimos_rascunhos = {}
-
-        bloqueio = verificar_pedido(pergunta)     # guardrail: padrão inexistente ou solução pronta
-        if bloqueio:
-            self.ultimos_rascunhos = {"guardrail": "pedido tratado em Python, sem chamar o modelo"}
-            self._historico.append((pergunta, bloqueio))
-            return bloqueio
-
-        avaliar = self._estudante_esta_respondendo()
         try:
-            texto = self._executar_crew(pergunta, avaliar)
-        except Exception as erro:                 # tratamento: falha do modelo (Ollama fora do ar etc.)
-            log.warning("Falha na crew: %s", erro)
-            return f"{MSG_FALHA_MODELO}\n(Detalhe técnico: {str(erro)[:200]})"
+            pergunta = (pergunta or "").strip()
+            if not pergunta:                          # tratamento: entrada vazia
+                return MSG_VAZIA
+            pergunta = pergunta[:MAX_CHARS_ENTRADA]   # tratamento: entrada longa demais
+            self.ultimos_rascunhos = {}
 
-        if not self._saida_valida(texto):         # tratamento: saída inesperada
-            return MSG_SAIDA_INVALIDA
+            bloqueio = verificar_pedido(pergunta)     # guardrail: padrão inexistente ou solução pronta
+            if bloqueio:
+                self.ultimos_rascunhos = {"guardrail": "pedido tratado em Python, sem chamar o modelo"}
+                self._historico.append((pergunta, bloqueio))
+                return bloqueio
 
-        texto = self._garantir_pergunta_final(texto)
-        self._historico.append((pergunta, texto))  # só guarda na memória respostas válidas
-        return texto
+            avaliar = self._estudante_esta_respondendo()
+            try:
+                texto = self._executar_crew(pergunta, avaliar)
+            except Exception as erro:                 # tratamento: falha do modelo (Ollama fora do ar etc.)
+                log.warning("Falha na crew: %s", erro)
+                return f"{MSG_FALHA_MODELO}\n(Detalhe técnico: {str(erro)[:200]})"
+
+            if not self._saida_valida(texto):         # tratamento: saída inesperada
+                return MSG_SAIDA_INVALIDA
+
+            texto = self._garantir_pergunta_final(texto)
+            self._historico.append((pergunta, texto))  # só guarda na memória respostas válidas
+            return texto
+        except (EOFError, KeyboardInterrupt):
+            return "AÇÃO INTERROMPIDA"
