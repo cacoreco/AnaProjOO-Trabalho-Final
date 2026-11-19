@@ -23,88 +23,90 @@ Trabalho final de ELC1070 – Análise e Projeto de Sistemas OO (UFSM).
 
 ## Preparar o ambiente
 
-### 1. Pacotes do sistema
+### 1. Preparar o Ollama
 
-```bash
-sudo pacman -S git uv ollama
+```shell
+scripts/1.install-ollama.sh
 ```
 
 `uv` é o gerenciador que instala o Python 3.12 sem mexer no Python do sistema. Com placa de vídeo existem variantes do pacote do Ollama (por exemplo, `ollama-cuda` para NVIDIA); sem GPU, o pacote `ollama` basta.
 
-### 2. Iniciar o Ollama
-
-```bash
-sudo systemctl enable --now ollama   # inicia agora e em todo boot
-systemctl status ollama              # deve mostrar "active (running)"
-```
-
-### 3. Clonar o repositório
-
-```bash
-git clone https://github.com/cacoreco/AnaProjOO-Trabalho-Final
-cd ~/AnaProjOO-Trabalho-Final
-```
-
-### 4. Baixar o modelo e criar a variante com contexto de 8192
-
-```bash
-ollama pull qwen2.5:3b
-ollama create qwen2.5-3b-8k -f Modelfile
-ollama list                          # deve listar qwen2.5-3b-8k e qwen2.5:3b
-```
-
 Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (4096 tokens) e **corta o prompt em silêncio** quando ela estoura, o que apagaria as regras dos agentes. O `Modelfile` fixa `num_ctx 8192`. O CrewAI fala com o Ollama por um endereço que não permite ajustar esse valor por requisição, então a configuração precisa estar no modelo.
 
-### 5. Ambiente Python 3.12
+### 2. Ambiente Python 3.12
 
-```bash
-uv venv --python 3.12 .venv
+```shell
+scripts/2.setup-agente.sh
+```
+
+### 3. Ativar o ambiente virtual python
+
+```shell
 source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
-python --version                     # deve mostrar Python 3.12.x
-uv pip install -r requirements.txt
 ```
 
 Todo terminal novo precisa repetir o `source .venv/bin/activate`. O prompt passa a mostrar `(.venv)`.
 
-### 6. Conferir a instalação
+#### Dica: Definir alias de comando para iniciar venv (opcional)
 
-```bash
-# o pacote enxerga a pasta de prompts?
-python -c "from agente.prompts import carregar_fatos; print(len(carregar_fatos()), 'caracteres')"
+Definir um alias para iniciar o ambiente virtual apenas digitando `venv` no terminal.
 
-# o Ollama responde com o modelo certo?
-curl http://localhost:11434/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"qwen2.5-3b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}'
+##### Bash e Zsh
+Adicionar o seguinte código ao seu `.bashrc` ou `.zshrc`:
+```shell
+alias venv="source .venv/bin/activate"
+```
+
+##### Fish
+Adicionar o seguinte código ao seu `.config/fish/config.fish`:
+```shell
+alias venv "source .venv/bin/activate.fish"
 ```
 
 ## Executar
 
-```bash
-python -m agente "Explique o que é o padrão Memento"   # uma pergunta, imprime a resposta e encerra
-python -m agente                                       # modo conversa (digite 'sair' para encerrar)
-python -m tests.cenarios                               # roda os cenários do roteiro e salva em tests/resultados/
+### Método 1: Pela CLI
+
+```shell
+python -m agent "Explique o que é o padrão Memento"    # uma pergunta, imprime a resposta e encerra
+python -m agent                                        # modo conversa (digite 'sair' para encerrar)
+python -m tests                                        # roda os cenários do roteiro e salva em tests/resultados/
 ```
+
+### Método 2: Pela Interface Web
+
+```shell
+python -m gui
+```
+
+Acessar http://localhost:7860
 
 Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite arquivos** enquanto eles rodam, porque cada cenário relê os prompts.
 
 ## Estrutura do projeto
 
-```
-├── Modelfile                 # variante do modelo com contexto de 8192
-├── requirements.txt          # dependências com versões fixadas
-├── agente/
-│   ├── __main__.py           # CLI: python -m agente
-│   ├── sistema.py            # os três agentes, as tarefas e o tratamento de erros
-│   └── prompts.py            # lê os prompts e o arquivo de fatos
+```shell
+├── Modelfile                   # variante do modelo com contexto de 8192
+├── agent/
+│   ├── __main__.py             # CLI: python -m agent
+│   ├── sistema.py              # os três agentes, as tarefas e o tratamento de erros
+│   └── prompts.py              # lê os prompts e o arquivo de fatos
+├── docs/
+│   └── resultados/             # resultados em markdown dos testes
+├── gui/
+│   └── __main__.py             # Interface Web
+├── lib/
+│   └── requirements.txt        # dependências com versões fixadas
 ├── prompts/
-│   ├── memento_fatos.md      # fonte de verdade sobre o Memento
-│   ├── tutor.md
-│   ├── inquiridor.md
-│   └── guardiao.md
+│   ├── memento_fatos.md        # fonte de verdade sobre o Memento
+│   ├── tutor.md                # instruções de explicação
+│   ├── inquiridor.md           # instruções de pergunta
+│   └── guardiao.md             # instruções de revisão
+├── scripts/
+│   ├── configure-python.sh     # configura  o ambiente virtual
+│   └── install-ollama.sh       # instala o ollama e os modelos
 └── tests/
-    ├── cenarios.py           # roteiro de cenários de teste
-    └── resultados/           # uma rodada por arquivo (iteracao1.md, iteracao2.md...)
+    └── __main__.py             # roteiro de cenários de teste
 ```
 
 ## Problemas comuns
@@ -121,5 +123,5 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 
 - Rode `git pull` antes de começar e faça commits pequenos, com mensagem clara.
 - **Evite editar o mesmo arquivo ao mesmo tempo**, principalmente os de `prompts/`. Combinem quem mexe em qual.
-- Depois de cada mudança nos prompts ou no código, rode os cenários e salve o resultado em `tests/resultados/` com um nome novo. É a evidência para o relatório.
+- Depois de cada mudança nos prompts ou no código, rode os cenários. O resultado será salvo em `docs/resultados`. É a evidência para o relatório.
 - Nunca coloque chave de API, senha ou token no repositório. O projeto não precisa de nenhum.
