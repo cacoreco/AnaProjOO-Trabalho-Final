@@ -28,11 +28,10 @@ sudo systemctl enable --now ollama || {
 }
 
 # Instala os modelos
-ollama pull qwen2.5:3b
-ollama create qwen2.5-3b-8k -f Modelfile
-ollama list     # deve listar qwen2.5-3b-8k e qwen2.5:3b
+ollama pull qwen2.5:0.5b
+ollama create qwen2.5-0.5b-8k -f .modelfile
 
 # Conferir a instalação
 curl http://localhost:11434/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"qwen2.5-3b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}'
+  -d '{"model":"qwen2.5-0.5b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}'
