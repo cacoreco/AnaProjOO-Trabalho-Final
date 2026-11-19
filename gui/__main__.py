@@ -3,7 +3,7 @@ import gradio as gr
 import argparse
 
 from agent.sistema import SistemaTutor
-from agent.__main__ import coletar_argumentos
+from agent.aux import coletar_argumentos
 
 def resposta(prompt):
     logging.getLogger("crewai").setLevel(logging.ERROR)

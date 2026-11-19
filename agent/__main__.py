@@ -6,23 +6,9 @@
 
 import logging
 import sys
-import argparse
 
 from .sistema import SistemaTutor
-
-def coletar_argumentos():
-    parser = argparse.ArgumentParser(
-        prog='Agente Memento',
-        description='Sistema multiagente em Python que ensina o padrão de projeto *Memento* (GoF) a um estudante iniciante.'
-    )
-
-    parser.add_argument("prompt", nargs="?", default=None)
-    parser.add_argument('-m', '--modelo', default="ollama/qwen2.5-0.5b-8k", help="modelo de linguagem a ser usado")
-    parser.add_argument('-t', '--temperatura', default=0.2, help="baixa: menos criatividade, menos invenção")
-    parser.add_argument('-j', '--janela', default=8192, help="tamanho da janela de contexto")
-    parser.add_argument('-p', '--porta', default=11434, help="porta a ser usada pelo servidor local")
-
-    return parser.parse_args()
+from .aux import coletar_argumentos
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI

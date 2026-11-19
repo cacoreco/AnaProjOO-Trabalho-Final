@@ -1,4 +1,3 @@
-<<<<<<< HEAD:agente/sistema.py
 """Orquestração da crew com modelo local (Ollama).
 
 Fluxo de um turno:
@@ -7,10 +6,9 @@ Fluxo de um turno:
   2. estudante respondeu a uma pergunta nossa: Inquiridor -> Guardião
   3. o sistema garante que a resposta final termine com uma pergunta
 """
-=======
+
 #Orquestração da crew: Tutor -> Inquiridor -> Guardião, com modelo local (Ollama).
 
->>>>>>> 604c4a864940df4ed5a36104db9552343e465186:agent/sistema.py
 import logging
 import re
 
@@ -19,15 +17,6 @@ from crewai import LLM, Agent, Crew, Process, Task
 from .guardrails import verificar_pedido
 from .prompts import carregar_fatos, carregar_prompt
 
-<<<<<<< HEAD:agente/sistema.py
-# --- Configuração do modelo local (sem API paga ou chave) -------------
-MODELO = "ollama/qwen2.5-3b-8k"        # variante criada com o Modelfile (num_ctx 8192)
-URL_OLLAMA = "http://localhost:11434"  # servidor local do Ollama
-JANELA_CONTEXTO = 8192                 # deve coincidir com o num_ctx do Modelfile
-TEMPERATURA = 0.2                      # baixa: menos criatividade, menos invenção
-
-=======
->>>>>>> 604c4a864940df4ed5a36104db9552343e465186:agent/sistema.py
 # --- Limites para não estourar a janela de 8k ------------------------------
 TURNOS_NO_HISTORICO = 3                # quantos pares pergunta/resposta entram no prompt
 MAX_CHARS_ENTRADA = 1500               # tamanho máximo da pergunta do estudante
