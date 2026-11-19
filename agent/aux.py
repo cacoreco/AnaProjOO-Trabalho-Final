@@ -13,3 +13,6 @@ def coletar_argumentos():
     parser.add_argument('-p', '--porta', default=11434, help="porta a ser usada pelo servidor local")
 
     return parser.parse_args()
+
+def porta_local(porta):
+    return f"http://localhost:{porta}"

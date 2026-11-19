@@ -4,12 +4,13 @@ import argparse
 
 from agent.sistema import SistemaTutor
 from agent.aux import coletar_argumentos
+from agent.aux import porta_local
 
 def resposta(prompt):
     logging.getLogger("crewai").setLevel(logging.ERROR)
 
     args = coletar_argumentos()
-    url= f"http://localhost:{args.porta}"
+    url= porta_local(args.porta)
 
     try:
         sistema = SistemaTutor(args.modelo, url, args.temperatura, args.janela)

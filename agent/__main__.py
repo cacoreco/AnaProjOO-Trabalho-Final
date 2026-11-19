@@ -9,13 +9,14 @@ import sys
 
 from .sistema import SistemaTutor
 from .aux import coletar_argumentos
+from .aux import porta_local
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI
 
     args = coletar_argumentos()
     prompt = args.prompt
-    url= f"http://localhost:{args.porta}"
+    url= porta_local(args.porta)
 
     try:
         sistema = SistemaTutor(args.modelo, url, args.temperatura, args.janela)
