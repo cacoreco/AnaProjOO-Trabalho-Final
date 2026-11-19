@@ -1,6 +1,5 @@
 import logging
 import gradio as gr
-import argparse
 
 from agent.sistema import SistemaTutor
 from agent.aux import coletar_argumentos

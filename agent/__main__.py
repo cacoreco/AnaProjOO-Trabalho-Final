@@ -46,7 +46,7 @@ def main() -> None:
                 print()
                 break
 
-            if prompt.strip().lower() in ["sair", "exit", "quit", "q"]:
+            if prompt.strip().lower() in ("sair", "exit", "quit", "q"):
                 break
 
             resposta = sistema.resposta(prompt)
