@@ -92,15 +92,6 @@ python -m tests                                        # roda os cenários do ro
 | -j JANELA      | --janela JANELA           | tamanho da janela de contexto             |
 | -p PORTA       | --porta PORTA             | porta a ser usada pelo servidor local     |
 
-| Item    | Descrição                                                                                 |
-|---------|-------------------------------------------------------------------------------------------|
-| Sistema | [Arch Linux](https://archlinux.org) (ou derivados)                                        |
-| Python  | versão `3.12` (o CrewAI não suporta o 3.14, que é a versão padrão do Arch hoje)           |
-| Ollama  | serviço local a ser rodado em `localhost`                                                 |
-| Modelo  | `qwen2.5:0.5b` ou similares (cerca de 500 MiB em disco)                                   |
-| Memória | testado com 8 GiB de RAM, em CPU                                                          |
-| Tempo   | cada resposta leva de 1 a 3 minutos em CPU, porque cada pergunta faz 3 chamadas ao modelo |
-
 ### Método 2: Pela Interface Web
 
 ```shell
