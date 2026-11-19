@@ -36,8 +36,9 @@ def main() -> None:
     arquivo = pasta / f"cenarios_{datetime.now():%Y%m%d_%H%M}.md"
     linhas = [f"# Resultados dos cenários - {datetime.now():%d/%m/%Y %H:%M}", ""]
 
+    args = coletar_argumentos()
+
     for nome, mensagens in CENARIOS:
-        args = coletar_argumentos()
         sistema = SistemaTutor(args.modelo, porta_local(args.porta), args.temperatura, args.janela)  # conversa nova por cenário: um não contamina o outro
 
         linhas += [f"## {nome}"]
@@ -59,7 +60,8 @@ def main() -> None:
             for agente, texto in sistema.ultimos_rascunhos.items():
                 linhas += [f"_Rascunho ({agente}):_ {texto}", ""]
     for nome, pergunta in CENARIOS:
-        sistema = agent.inicializa_sistema()  # conversa nova por cenário: um não contamina o outro
+        sistema = SistemaTutor(args.modelo, porta_local(args.porta), args.temperatura, args.janela)  # conversa nova por cenário: um não contamina o outro
+ 
         inicio = time.time()
         resposta = sistema.resposta(pergunta)
         duracao = time.time() - inicio
