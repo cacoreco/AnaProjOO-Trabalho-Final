@@ -108,6 +108,7 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 
 ```shell
 ├── agent/
+│   ├── __init__.py           # regras de importação
 │   ├── aux.py                # funções auxiliares
 │   ├── guardrails.py         # tratamento de prompts inválidos
 │   ├── prompts.py            # lê os prompts e o arquivo de fatos
