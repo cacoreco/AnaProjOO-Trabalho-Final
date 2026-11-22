@@ -9,6 +9,8 @@ from pathlib import Path
 
 from agent import SistemaTutor, coletar_argumentos, porta_local
 
+PASTA = "output" 
+
 CENARIOS = [
     ("Conceitual", ["Explique o que é o padrão Memento e qual problema ele resolve."]),
     ("Exemplo", ["Dê um exemplo de aplicação do padrão Memento em Java."]),
@@ -28,7 +30,7 @@ CENARIOS = [
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)
 
-    pasta = Path("docs/resultados")
+    pasta = Path(PASTA)
     pasta.mkdir(exist_ok=True)
     arquivo = pasta / f"cenarios_{datetime.now():%Y%m%d_%H%M}.md"
     linhas = [f"# Resultados dos cenários - {datetime.now():%d/%m/%Y %H:%M}", ""]
