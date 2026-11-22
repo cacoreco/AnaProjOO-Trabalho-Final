@@ -115,8 +115,8 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 │   └── sistema.py            # os três agentes, as tarefas e o tratamento de erros
 ├── cli/
 │   └── __main__.py           # interface por linha de comando
-├── docs/
-│   └── resultados/           # resultados em markdown dos testes
+├── output/
+│   └── ...                   # resultados em markdown dos testes
 ├── gui/
 │   └── __main__.py           # interface Web
 ├── lib/
