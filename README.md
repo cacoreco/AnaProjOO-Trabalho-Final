@@ -44,7 +44,7 @@ scripts/1.install-ollama.sh
 Rodar o seguinte comando:
 
 ```shell
-scripts/2.setup-agente.sh
+scripts/2.setup-python.sh
 ```
 
 ### 3. Ativar o ambiente virtual python
@@ -141,11 +141,3 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 | `ModuleNotFoundError: No module named agente`                 | Você não está na pasta raiz do projeto. Rode os comandos a partir dela.                                                                                   |
 | `ModuleNotFoundError: No module named 'crewai`                | Você esqueceu de rodar o `activate` para ativar o `venv`                                                                                                  |
 | Respostas muito lentas                                        | Esperado em CPU. Feche o navegador e outros programas pesados ou tente trocar o modelo.                                                                   |
-
-## Trabalhando em dupla
-
-- Rode `git pull` **antes de começar**, para evitar conflitos.
-- Faça **commits pequenos** com **mesagens claras**.
-- **Evite editar o mesmo arquivo ao mesmo tempo**, principalmente os de `prompts/`. Combinem quem mexe em qual.
-- Depois de cada mudança nos prompts ou no código, **rode os testes**. O resultado será salvo em `docs/resultados`. É a evidência para o relatório.
-- Nunca coloque chave de API, senha ou token no repositório. O projeto não precisa de nenhum.
