@@ -1,9 +1,11 @@
 """Orquestração da crew com modelo local (Ollama).
 
 Fluxo de um turno:
-  0. guardrails em Python: pedido inválido -> resposta fixa, sem chamar o modelo
-  1. estudante fez uma pergunta/pedido:        Tutor -> Inquiridor -> Guardião
+  0. guardrails em Python: pedido inválido, cumprimento ou assunto fora do tema
+     -> resposta fixa, sem chamar o modelo
+  1. estudante fez uma pergunta/pedido novo:   Tutor -> Inquiridor -> Guardião
   2. estudante respondeu a uma pergunta nossa: Inquiridor -> Guardião
+     (uma pergunta nova feita logo depois de uma pergunta nossa volta para o fluxo 1)
   3. o sistema garante que a resposta final termine com uma pergunta
 """
 
@@ -14,13 +16,16 @@ import re
 
 from crewai import LLM, Agent, Crew, Process, Task
 
-from .guardrails import verificar_pedido
+from .guardrails import eh_novo_pedido, verificar_pedido, verificar_tema
 from .prompts import carregar_fatos, carregar_prompt
 
 # --- Limites para não estourar a janela de 8k ------------------------------
 TURNOS_NO_HISTORICO = 3                # quantos pares pergunta/resposta entram no prompt
 MAX_CHARS_ENTRADA = 1500               # tamanho máximo da pergunta do estudante
 MAX_CHARS_POR_MENSAGEM = 600           # corte de cada mensagem guardada no histórico
+# Teto de tokens por resposta de agente. Sem ele, modelos pequenos podem entrar em repetição
+# e gerar milhares de tokens sem parar (visto com o qwen2.5:0.5b: mais de 13 mil numa resposta).
+MAX_TOKENS_POR_AGENTE = 800
 
 # --- Mensagens de erro amigáveis -------------------------------------------
 MSG_VAZIA = "Digite uma pergunta sobre o padrão Memento."
@@ -40,8 +45,9 @@ class SistemaTutor:
         self._llm = LLM(
             model=model,
             base_url=base_url,
-            temperature=temperature,
-            context_window_size=context_window_size,
+            temperature=float(temperature),
+            context_window_size=int(context_window_size),
+            max_tokens=MAX_TOKENS_POR_AGENTE,
         )
         self._tutor = self._criar_agente("tutor", fatos)
         self._inquiridor = self._criar_agente("inquiridor", fatos)
@@ -69,9 +75,18 @@ class SistemaTutor:
             linhas.append(f"Sistema: {resposta[:MAX_CHARS_POR_MENSAGEM]}")
         return "\n".join(linhas)
 
-    def _estudante_esta_respondendo(self) -> bool:
-        """True se a última resposta do sistema terminou com uma pergunta (logo, a nova mensagem a responde)."""
+    def _sistema_fez_pergunta(self) -> bool:
+        """True se a última resposta do sistema terminou com uma pergunta ao estudante."""
         return bool(self._historico) and self._historico[-1][1].rstrip().endswith("?")
+
+    def _estudante_esta_respondendo(self, mensagem: str) -> bool:
+        """True se a mensagem é a resposta do estudante à nossa última pergunta.
+
+        Uma pergunta ou pedido novo (termina com '?' ou começa com "explique", "dê um exemplo"...)
+        não é resposta: antes, qualquer mensagem depois de uma pergunta nossa ia para o modo
+        AVALIAR, o Tutor nunca mais era chamado e o sistema repetia a mesma pergunta em loop.
+        """
+        return self._sistema_fez_pergunta() and not eh_novo_pedido(mensagem)
 
     def _executar_crew(self, pergunta: str, avaliar: bool) -> str:
         # O texto é montado em Python (f-string), sem variáveis do CrewAI.
@@ -79,25 +94,37 @@ class SistemaTutor:
             f"HISTÓRICO RECENTE:\n{self._texto_historico()}\n\n"
             f"MENSAGEM DO ESTUDANTE:\n{pergunta}\n"
         )
+        # O Guardião não recebe o histórico: com ele, o modelo trocava o rascunho a revisar
+        # por uma cópia de uma resposta anterior do Sistema.
+        contexto_guardiao = f"MENSAGEM DO ESTUDANTE:\n{pergunta}\n"
+        contexto_guardiao += "\nEscreva para o estudante (\"você\"), sem falar do rascunho nem \"do estudante\".\n"
         if avaliar:
+            # Só a última pergunta e a resposta: com o histórico inteiro, o modelo avaliava uma
+            # mensagem antiga do estudante (chegou a dizer que uma resposta certa estava errada).
+            ultima_pergunta = self._extrair_pergunta(self._historico[-1][1]) or self._historico[-1][1]
             t_inquiridor = Task(
-                description=contexto
-                + "\nMODO AVALIAR: a mensagem do estudante é a resposta dele à última pergunta do "
-                "Sistema (veja o histórico). Avalie-a conforme suas regras e termine com a próxima pergunta curta.",
+                description=f"PERGUNTA DO SISTEMA:\n{ultima_pergunta}\n\n"
+                f"RESPOSTA DO ESTUDANTE (é esta que você avalia):\n{pergunta}\n"
+                "\nMODO AVALIAR: avalie SOMENTE a RESPOSTA DO ESTUDANTE acima, comparando-a com os FATOS, "
+                "conforme suas regras, e termine com a próxima pergunta curta.",
                 expected_output="Feedback de até 2 linhas e UMA pergunta curta no final.",
                 agent=self._inquiridor,
             )
             t_guardiao = Task(
-                description=contexto
-                + "\nSua tarefa: revise o rascunho do Inquiridor e entregue a resposta final, mantendo a pergunta final.",
-                expected_output="A resposta final ao estudante, em português, com no máximo 12 linhas.",
+                description=contexto_guardiao
+                + "\nSua tarefa: revise o rascunho do Inquiridor (no contexto) e entregue a resposta final, "
+                "mantendo o feedback curto e a pergunta final. Não acrescente uma explicação nova do padrão: "
+                "só corrija o que contradiz os FATOS.",
+                expected_output="O feedback do rascunho (no máximo 3 linhas) e a pergunta final do rascunho. Nada além disso.",
                 agent=self._guardiao,
                 context=[t_inquiridor],
             )
             nomeadas = [("inquiridor", t_inquiridor), ("guardiao", t_guardiao)]
         else:
             t_tutor = Task(
-                description=contexto + "\nSua tarefa: responda como Tutor, seguindo suas regras.",
+                description=contexto
+                + "\nSua tarefa: responda como Tutor, seguindo suas regras, à MENSAGEM DO ESTUDANTE acima. "
+                "O histórico serve só de contexto: não repita respostas anteriores do Sistema.",
                 expected_output="Explicação curta em português, sem pergunta no final.",
                 agent=self._tutor,
             )
@@ -111,8 +138,9 @@ class SistemaTutor:
                 context=[t_tutor],
             )
             t_guardiao = Task(
-                description=contexto
-                + "\nSua tarefa: revise o rascunho do Tutor e entregue a resposta final.",
+                description=contexto_guardiao
+                + "\nSua tarefa: revise o rascunho do Tutor (no contexto) e entregue a resposta final. "
+                "Mantenha os blocos de código do rascunho.",
                 expected_output="A resposta final ao estudante, em português, com no máximo 12 linhas.",
                 agent=self._guardiao,
                 context=[t_tutor],  # o Guardião revisa só a explicação; a pergunta é acrescentada pelo sistema
@@ -140,6 +168,7 @@ class SistemaTutor:
         """Devolve a última frase terminada em '?' (curta e que não seja 'entendeu?'), ou ''."""
         for frase in reversed(re.findall(r"[^.!?\n]*\?", texto)):
             frase = frase.strip(" *_-\t")
+            frase = re.sub(r"(?i)^pergunta( curta)?\s*:\s*", "", frase)  # rótulo que o modelo às vezes escreve
             if 10 <= len(frase) <= 250 and "entendeu" not in frase.lower():
                 return frase
         return ""
@@ -170,7 +199,15 @@ class SistemaTutor:
                 self._historico.append((pergunta, bloqueio))
                 return bloqueio
 
-            avaliar = self._estudante_esta_respondendo()
+            avaliar = self._estudante_esta_respondendo(pergunta)
+
+            # guardrail: cumprimento ou assunto fora do tema. Não entra no histórico, para não
+            # poluir o contexto do modelo e para que uma pergunta nossa ainda pendente continue valendo.
+            fora_do_tema = verificar_tema(pergunta, respondendo=avaliar)
+            if fora_do_tema:
+                self.ultimos_rascunhos = {"guardrail": "cumprimento ou fora do tema, tratado em Python"}
+                return fora_do_tema
+
             try:
                 texto = self._executar_crew(pergunta, avaliar)
             except Exception as erro:                 # tratamento: falha do modelo (Ollama fora do ar etc.)
