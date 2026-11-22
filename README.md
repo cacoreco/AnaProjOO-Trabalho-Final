@@ -78,8 +78,8 @@ alias venv "source .venv/bin/activate.fish"
 
 ```shell
 venv
-python -m agent "Explique o que é o padrão Memento"    # uma pergunta, imprime a resposta e encerra
-python -m agent                                        # modo conversa (digite 'sair' para encerrar)
+python -m cli "Explique o que é o padrão Memento"      # uma pergunta, imprime a resposta e encerra
+python -m cli                                          # modo conversa (digite 'sair' para encerrar)
 python -m tests                                        # roda os cenários do roteiro e salva em tests/resultados/
 ```
 
@@ -108,11 +108,12 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 
 ```shell
 ├── agent/
-│   ├── __main__.py           # CLI: python -m agent
 │   ├── aux.py                # funções auxiliares
 │   ├── guardrails.py         # tratamento de prompts inválidos
 │   ├── prompts.py            # lê os prompts e o arquivo de fatos
 │   └── sistema.py            # os três agentes, as tarefas e o tratamento de erros
+├── cli/
+│   └── __main__.py           # interface por linha de comando
 ├── docs/
 │   └── resultados/           # resultados em markdown dos testes
 ├── gui/
