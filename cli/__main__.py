@@ -1,17 +1,17 @@
 # Ponto de entrada:
 #
-# python -m agent "pergunta"
+# python -m cli "pergunta"
 # OU
-# python -m agent (modo conversa)
+# python -m cli (modo conversa)
 
 import logging
 import sys
 from colorama import Fore
 
-from agent.sistema import SistemaTutor
-from agent.aux import coletar_argumentos
-from agent.aux import porta_local
-from agent.aux import limpa_tela
+from agent import SistemaTutor
+from agent import coletar_argumentos
+from agent import porta_local
+from agent import limpa_tela
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI

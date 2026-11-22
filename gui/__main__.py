@@ -4,9 +4,9 @@ import logging
 import gradio as gr
 import sys
 
-from agent.sistema import SistemaTutor
-from agent.aux import coletar_argumentos
-from agent.aux import porta_local
+from agent import SistemaTutor
+from agent import coletar_argumentos
+from agent import porta_local
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)
