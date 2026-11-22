@@ -14,11 +14,23 @@ sair_com_erro() {
     exit 1
 }
 
+# Não deixa o usuário rodar o script como root
+[ "$EUID" -ne 0 ] || sair_com_erro "Evite rodar scripts como root."
+
 # Verifica se o sistema é arch linux 
 [ -f /etc/arch-release ] || sair_com_erro "É necessário o Arch Linux para rodar esse script."
 command -v systemctl >/dev/null || sair_com_erro "comando \"systemctl\" não encontrado."
 
+# Pedir ao usuário permissão para instalar pacotes
+read -n 1 -p "NOTA: os 2 comandos seguintes precisam de previlégios de administrador. Aceitar (S/n)? " resposta
+printf "\n"
+[ "$resposta" != "n" -a "$resposta" != "N" ] || {
+    echo "Saindo..."
+    exit
+}
+
 # PASSO 1: Instalar o Ollama (se já não estiver instalado)
+
 sudo pacman -Sy --needed ollama
 
 # PASSO 2: Iniciar o ollama
