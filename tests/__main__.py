@@ -7,8 +7,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from agent.sistema import SistemaTutor
-from agent.aux import coletar_argumentos, porta_local
+from agent import SistemaTutor, coletar_argumentos, porta_local
 
 CENARIOS = [
     ("Conceitual", ["Explique o que é o padrão Memento e qual problema ele resolve."]),

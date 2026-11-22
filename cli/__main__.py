@@ -6,12 +6,10 @@
 
 import logging
 import sys
+
 from colorama import Fore
 
-from agent import SistemaTutor
-from agent import coletar_argumentos
-from agent import porta_local
-from agent import limpa_tela
+from agent import SistemaTutor, coletar_argumentos, porta_local, limpa_tela
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)  # silencia avisos repetitivos do CrewAI
