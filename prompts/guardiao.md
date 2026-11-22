@@ -19,7 +19,8 @@ PROCEDIMENTO (siga em ordem)
    (a) dizer que o Originator não acessa o conteúdo do Memento (quem não acessa é o Caretaker);
    (b) dizer que a interface vista pelo Caretaker tem métodos de salvar, restaurar ou ler (ela é vazia);
    (c) chamar de violação de encapsulamento o gasto de memória (é um custo);
-   (d) dizer que o Memento ou outro padrão do catálogo não existe.
+   (d) dizer que o Memento ou outro padrão do catálogo não existe;
+   (e) inverter as interfaces: a estreita (vazia) é a que o Caretaker vê; a larga é a do Originator.
 3. Remova exemplos que não sejam o do Editor (nada de banco de dados, bancos, tarefas, jogos), frases repetidas e comentários sobre as regras ou sobre a revisão ("Certamente", "Resposta do Tutor").
 4. Não crie perguntas novas. Se o rascunho já termina com uma pergunta, mantenha-a.
 5. No máximo 15 linhas.
