@@ -1,11 +1,9 @@
-"""Roda os cenários do roteiro (padrão Memento) e salva as respostas em tests/resultados/.
-
-Cada cenário é uma lista de mensagens enviadas na MESMA conversa (a maioria tem uma só).
-Uso, na pasta do projeto:  python -m tests.cenarios
-"""
+# Roda os cenários do roteiro (padrão Memento) e salva as respostas em tests/resultados/.
+# Cada cenário é uma lista de mensagens enviadas na MESMA conversa (a maioria tem uma só).
 
 import time
 import logging
+
 from datetime import datetime
 from pathlib import Path
 
@@ -60,7 +58,8 @@ def main() -> None:
             for agente, texto in sistema.ultimos_rascunhos.items():
                 linhas += [f"_Rascunho ({agente}):_ {texto}", ""]
     for nome, pergunta in CENARIOS:
-        sistema = SistemaTutor(args.modelo, porta_local(args.porta), args.temperatura, args.janela)  # conversa nova por cenário: um não contamina o outro
+        # Conversa nova por cenário: um não contamina o outro
+        sistema = SistemaTutor(args.modelo, porta_local(args.porta), args.temperatura, args.janela)
  
         inicio = time.time()
         resposta = sistema.resposta(pergunta)

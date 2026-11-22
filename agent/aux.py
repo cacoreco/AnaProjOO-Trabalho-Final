@@ -3,6 +3,7 @@
 import argparse
 import os
 
+# coleta as argumentos passados pelo usuário na CLI
 def coletar_argumentos():
     parser = argparse.ArgumentParser(
         prog='Agente Memento',
@@ -17,9 +18,11 @@ def coletar_argumentos():
 
     return parser.parse_args()
 
+# retorna a URL de um servidor local em uma certa porta
 def porta_local(porta):
     return f"http://localhost:{porta}"
 
+# para limpar o terminal de acordo com o SO
 def limpa_tela():
     if os.name == "nt":
         os.system("cls")

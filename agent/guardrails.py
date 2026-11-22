@@ -1,5 +1,6 @@
-"""Verificações determinísticas (sem modelo) feitas ANTES de chamar a crew.
+# Verificações determinísticas (sem modelo) feitas ANTES de chamar a crew.
 
+"""
 Por quê: nos testes, o Guardião (modelo de 3B) escolheu o texto de recusa errado
 (chegou a dizer que o Memento não existe). Pedidos inválidos previsíveis são
 tratados aqui, com respostas fixas, o que é mais seguro e não gasta tempo de modelo.
@@ -8,6 +9,7 @@ passaram a ser tratados aqui: o modelo respondia a eles repetindo a explicação
 Limitação: reconhece apenas formulações comuns; paráfrases incomuns passam para a crew,
 onde as regras anti-alucinação dos prompts continuam valendo.
 """
+
 import re
 import unicodedata
 

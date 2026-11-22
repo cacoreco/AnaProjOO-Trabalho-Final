@@ -1,3 +1,5 @@
+# Abre um servidor web local que provém uma interface para o agente
+
 import logging
 import gradio as gr
 import sys

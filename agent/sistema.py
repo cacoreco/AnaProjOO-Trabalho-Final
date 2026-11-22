@@ -1,5 +1,6 @@
-"""Orquestração da crew com modelo local (Ollama).
+#Orquestração da crew com modelo local (Ollama).
 
+"""
 Fluxo de um turno:
   0. guardrails em Python: pedido inválido, cumprimento ou assunto fora do tema
      -> resposta fixa, sem chamar o modelo
@@ -9,7 +10,7 @@ Fluxo de um turno:
   3. o sistema garante que a resposta final termine com uma pergunta
 """
 
-#Orquestração da crew: Tutor -> Inquiridor -> Guardião, com modelo local (Ollama).
+# Orquestração da crew: Tutor -> Inquiridor -> Guardião, com modelo local (Ollama).
 
 import logging
 import re
@@ -76,12 +77,13 @@ class SistemaTutor:
         return "\n".join(linhas)
 
     def _sistema_fez_pergunta(self) -> bool:
-        """True se a última resposta do sistema terminou com uma pergunta ao estudante."""
+        # True se a última resposta do sistema terminou com uma pergunta ao estudante.
         return bool(self._historico) and self._historico[-1][1].rstrip().endswith("?")
 
     def _estudante_esta_respondendo(self, mensagem: str) -> bool:
-        """True se a mensagem é a resposta do estudante à nossa última pergunta.
+        # True se a mensagem é a resposta do estudante à nossa última pergunta.
 
+        """
         Uma pergunta ou pedido novo (termina com '?' ou começa com "explique", "dê um exemplo"...)
         não é resposta: antes, qualquer mensagem depois de uma pergunta nossa ia para o modo
         AVALIAR, o Tutor nunca mais era chamado e o sistema repetia a mesma pergunta em loop.
@@ -165,7 +167,8 @@ class SistemaTutor:
 
     @staticmethod
     def _extrair_pergunta(texto: str) -> str:
-        """Devolve a última frase terminada em '?' (curta e que não seja 'entendeu?'), ou ''."""
+        #Devolve a última frase terminada em '?' (curta e que não seja 'entendeu?'), ou ''.
+
         for frase in reversed(re.findall(r"[^.!?\n]*\?", texto)):
             frase = frase.strip(" *_-\t")
             frase = re.sub(r"(?i)^pergunta( curta)?\s*:\s*", "", frase)  # rótulo que o modelo às vezes escreve
@@ -174,7 +177,8 @@ class SistemaTutor:
         return ""
 
     def _garantir_pergunta_final(self, texto: str) -> str:
-        """Contrato de saída: a resposta termina com uma pergunta (mantém o diálogo socrático)."""
+        #Contrato de saída: a resposta termina com uma pergunta (mantém o diálogo socrático).
+
         if texto.rstrip().endswith("?"):
             return texto
         pergunta = self._extrair_pergunta(self.ultimos_rascunhos.get("inquiridor", ""))

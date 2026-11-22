@@ -126,7 +126,7 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 │   └── guardiao.md           # instruções de revisão
 ├── scripts/
 │   ├── 1.install-ollama.sh   # instala o ollama e os modelos
-│   └── 2.setup-agente.sh     # configura o python e o ambiente
+│   └── 2.setup-python.sh     # configura o python e o ambiente
 ├── tests/
 │   └── __main__.py           # roteiro de cenários de teste
 └── .modelfile                # variante do modelo com janela de contexto de 8192

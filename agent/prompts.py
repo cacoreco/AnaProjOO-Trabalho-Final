@@ -1,4 +1,5 @@
-"""Leitura dos prompts e do arquivo de fatos (tudo fica em arquivos de texto na pasta prompts/)."""
+# Leitura dos prompts e do arquivo de fatos (tudo fica em arquivos de texto na pasta prompts/).
+
 from pathlib import Path
 
 PASTA_PROMPTS = Path(__file__).resolve().parent.parent / "prompts"
@@ -6,16 +7,15 @@ SECOES = ("ROLE", "GOAL", "BACKSTORY")
 
 
 def carregar_fatos() -> str:
-    """Lê a fonte de verdade sobre o Memento, usada pelos três agentes."""
+    # Lê a fonte de verdade sobre o Memento, usada pelos três agentes.
     return (PASTA_PROMPTS / "memento_fatos.md").read_text(encoding="utf-8").strip()
 
 
 def carregar_prompt(nome: str, fatos: str) -> dict:
-    """Lê prompts/<nome>.md e devolve {'role', 'goal', 'backstory'}.
+    # Lê prompts/<nome>.md e devolve {'role', 'goal', 'backstory'}.
+    # O marcador {fatos} é substituído aqui, em Python, e não pelo CrewAI:
+    # assim, chaves { } em códigos Java não são confundidas com variáveis.
 
-    O marcador {fatos} é substituído aqui, em Python, e não pelo CrewAI:
-    assim, chaves { } em códigos Java não são confundidas com variáveis.
-    """
     texto = (PASTA_PROMPTS / f"{nome}.md").read_text(encoding="utf-8")
     texto = texto.replace("{fatos}", fatos)
 
