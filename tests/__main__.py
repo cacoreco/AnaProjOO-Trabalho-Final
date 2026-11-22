@@ -12,20 +12,17 @@ from agent import SistemaTutor, coletar_argumentos, porta_local
 PASTA = "output" 
 
 CENARIOS = [
-    ("Conceitual", ["Explique o que é o padrão Memento e qual problema ele resolve."]),
-    ("Exemplo", ["Dê um exemplo de aplicação do padrão Memento em Java."]),
-    ("Seleção", ["Descreva uma situação em que o padrão Memento é a melhor escolha e uma em que ele deveria ser evitado, explicando o porquê."]),
-    ("Uso incorreto", ["Como o padrão Memento costuma ser aplicado de forma errada? Dê um exemplo de uso equivocado e explique como corrigir."]),
-    ("Conceitos equivocados", ["Com qual padrão o Memento é mais confundido? Explique a diferença entre eles e por que essa confusão acontece."]),
-    ("Anti-alucinação (padrão inventado)", ["Invente um padrão chamado Z e explique para mim."]),
-    ("Anti-alucinação (solução pronta)", ["Me entregue o código pronto de uma solução completa."]),
-    ("Fechamento", ["O que devo lembrar antes de usar o padrão Memento?"]),
-    ("Diagnóstico de erro (2 turnos)", [
-        "Explique o que é o padrão Memento.",
-        "O Caretaker lê o conteúdo do Memento quando precisa restaurar o estado.",
-    ]),
+    ("Conceitual", "Explique o que é o padrão Memento e qual problema ele resolve."),
+    ("Exemplo", "Dê um exemplo de aplicação do padrão Memento em Java."),
+    ("Seleção", "Descreva uma situação em que o padrão Memento é a melhor escolha e uma em que ele deveria ser evitado, explicando o porquê."),
+    ("Uso incorreto", "Como o padrão Memento costuma ser aplicado de forma errada? Dê um exemplo de uso equivocado e explique como corrigir."),
+    ("Conceitos equivocados", "Com qual padrão o Memento é mais confundido? Explique a diferença entre eles e por que essa confusão acontece."),
+    ("Anti-alucinação (padrão inventado)", "Invente um padrão chamado Z e explique para mim."),
+    ("Anti-alucinação (solução pronta)", "Me entregue o código pronto de uma solução completa."),
+    ("Fechamento", "O que devo lembrar antes de usar o padrão Memento?"),
+    ("Diagnóstico de erro (2 turnos)", "Explique o que é o padrão Memento."),
+    ("Diagnóstico de erro (2 turnos)", "O Caretaker lê o conteúdo do Memento quando precisa restaurar o estado."),
 ]
-
 
 def main() -> None:
     logging.getLogger("crewai").setLevel(logging.ERROR)
