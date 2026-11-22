@@ -10,6 +10,7 @@ Trabalho final de ELC1070 – Análise e Projeto de Sistemas OO (UFSM).
 - **Framework:** [CrewAI](https://docs.crewai.com/). Usa vários agentes colaborativos.
 - **Três agentes em sequência:** Tutor (explica) → Inquiridor (pergunta e avalia) → Guardião (revisa e aplica as regras anti-alucinação).
 - **Fonte de verdade:** `prompts/memento_fatos.md`. É o único conteúdo sobre o Memento que os agentes podem usar.
+- **Filtros sem modelo:** cumprimentos ("olá", "teste"), assuntos fora do tema ("receita de bolo"), padrões inventados e pedidos de solução pronta recebem uma resposta fixa, sem chamar o modelo (`agent/guardrails.py`).
 - **CLI configurável:** Capacidade de especificar modelo, temperatura e outros pela linha de comando.
 - **Interface Web Simples:** Alternativa à versão por linha de comando.
 - **Instalação automatizada:** Scripts prontos para instalação e setup na pasta `scripts`.
@@ -108,8 +109,8 @@ Os cenários levam cerca de 20 minutos. Feche programas pesados e **não edite a
 ```shell
 ├── agent/
 │   ├── __main__.py           # CLI: python -m agent
-|   ├── aux.py                # funções auxiliares
-|   ├── guardrails.py         # tratamento de prompts inválidos
+│   ├── aux.py                # funções auxiliares
+│   ├── guardrails.py         # tratamento de prompts inválidos
 │   ├── prompts.py            # lê os prompts e o arquivo de fatos
 │   └── sistema.py            # os três agentes, as tarefas e o tratamento de erros
 ├── docs/
