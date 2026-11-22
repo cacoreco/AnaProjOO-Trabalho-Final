@@ -1,36 +1,42 @@
 #!/bin/sh
 set -eu
 
+# Script auxiliar para facilitar a configuração do ollama
+# REQUISITOS: archlinux, systemctl, curl
+
+# Constantes
 modelo="qwen2.5:0.5b"
 modelfile=".modelfile"
 
-# Script auxiliar para facilitar a configuração do ollama
-#   Requisitos: archlinux com systemd
-
+# Função auxiliar
 sair_com_erro() {
-    printf '%s\n' "$*"
+    printf 'ERRO: %s\n' "$*"
     exit 1
 }
 
-# Para o script só funcionar no arch (já que requer os comandos do arch)
-# O comando systemctl também é necessário
+# Verifica se o sistema é arch linux 
 [ -f /etc/arch-release ] || sair_com_erro "É necessário o Arch Linux para rodar esse script."
 command -v systemctl >/dev/null || sair_com_erro "comando \"systemctl\" não encontrado."
 
-# Instala o Ollama (se já não estiver instalado)
-sudo pacman -S --needed ollama
+# PASSO 1: Instalar o Ollama (se já não estiver instalado)
+sudo pacman -Sy --needed ollama
 
-# Inicia o ollama
+# PASSO 2: Iniciar o ollama
 sudo systemctl enable --now ollama || sair_com_erro "Falha ao iniciar o ollama."
 
-# Instala o modelo
+# PASSO 3: Instalar o modelo
 ollama pull "$modelo" || sair_com_erro "Falha ao instalar o modelo $modelo."
 ollama create "$modelo-8k" -f "$modelfile"  || sair_com_erro "Falha ao criar o modelo $modelo."
 
-# Conferir a instalação
-curl http://localhost:11434/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"qwen2.5-0.5b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}' \
-  || sair_com_erro "Erro ao testar o modelo"
+# PASSO 4: Testar se está funcionando
+if command -v curl > /dev/null; then
+    curl http://localhost:11434/v1/chat/completions \
+        -H "Content-Type: application/json" \
+        -d '{"model":"qwen2.5-0.5b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}' \
+    || sair_com_erro "Erro ao testar o modelo"
+else
+    sair_com_erro "Commando \"curl\" não encontrado."
+fi
 
+# FIM
 printf '\n%s\n' "Ollama e modelo instalados e funcionando."
