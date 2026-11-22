@@ -52,25 +52,19 @@ scripts/2.setup-python.sh
 
 Rodar o seguinte comando:
 
-```shell
-source .venv/bin/activate            # no fish: source .venv/bin/activate.fish
-```
-
-> NOTA: Todo terminal novo precisa repetir o `source .venv/bin/activate`. O prompt passa a mostrar `(.venv)`.
-
-> DICA: Definir alias de comando para iniciar venv (opcional)
-
 #### Bash e Zsh
-Adicionar o seguinte código ao seu `.bashrc` ou `.zshrc`:
+
 ```shell
-alias venv="source .venv/bin/activate"
+source .venv/bin/activate
 ```
 
 #### Fish
-Adicionar o seguinte código ao seu `.config/fish/config.fish`:
+
 ```shell
-alias venv "source .venv/bin/activate.fish"
+source .venv/bin/activate.fish
 ```
+
+> NOTA: Todo terminal novo precisa repetir o `source .venv/bin/activate`. O prompt passa a mostrar `(.venv)`.
 
 ## Execução
 
