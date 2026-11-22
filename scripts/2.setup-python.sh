@@ -40,5 +40,5 @@ source .venv/bin/activate
 uv pip install -r "$arquivo_requisitos" || sair_com_erro "Erro ao instalar os requisitos."
 
 # testar se deu certo
-python -c "from agente.prompts import carregar_fatos; print(len(carregar_fatos()), 'caracteres')" \
+python -c "import agent" \
     || sair_com_erro "Erro ao configurar o ambiente."
