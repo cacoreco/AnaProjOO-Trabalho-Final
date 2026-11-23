@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 class SistemaTutor:
     #Tutor multiagente do padrão Memento. Uma instância = uma conversa.
 
-    def __init__(self, model, base_url, temperature, context_window_size) -> None:
+    def __init__(self, model: str, base_url: str, temperature: float, context_window_size: int) -> None:
         fatos = carregar_fatos()
         self._llm = LLM(
             model=model,
@@ -161,7 +161,7 @@ class SistemaTutor:
         return str(getattr(resultado, "raw", resultado)).strip()
 
     @staticmethod
-    def _saida_da_tarefa(tarefa) -> str:
+    def _saida_da_tarefa(tarefa: Task) -> str:
         saida = getattr(tarefa, "output", None)
         return str(getattr(saida, "raw", "") or "").strip()
 
