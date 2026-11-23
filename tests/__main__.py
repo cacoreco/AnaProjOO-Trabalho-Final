@@ -34,27 +34,6 @@ def main() -> None:
 
     args = coletar_argumentos()
 
-    for nome, mensagens in CENARIOS:
-        sistema = SistemaTutor(args.modelo, porta_local(args.porta), args.temperatura, args.janela)  # conversa nova por cenário: um não contamina o outro
-
-        linhas += [f"## {nome}"]
-        for numero, mensagem in enumerate(mensagens, start=1):
-            inicio = time.time()
-            resposta = sistema.resposta(mensagem)
-            duracao = time.time() - inicio
-            print(f"[{nome} - mensagem {numero}] {duracao:.0f}s")
-            linhas += [
-                f"**Mensagem {numero}:** {mensagem}",
-                "",
-                f"**Resposta ({duracao:.0f}s):**",
-                "",
-                resposta,
-                "",
-                "**Julgamento (correção e utilidade):** _preencher_",
-                "",
-            ]
-            for agente, texto in sistema.ultimos_rascunhos.items():
-                linhas += [f"_Rascunho ({agente}):_ {texto}", ""]
     for nome, pergunta in CENARIOS:
         # Conversa nova por cenário: um não contamina o outro
         sistema = SistemaTutor(args.modelo, porta_local(args.porta), args.temperatura, args.janela)
