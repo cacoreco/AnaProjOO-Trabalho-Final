@@ -12,6 +12,7 @@ from agent import SistemaTutor, coletar_argumentos, porta_local
 PASTA = "output" 
 
 CENARIOS = [
+    ("Saudação", "Oi tudo bem?"),
     ("Conceitual", "Explique o que é o padrão Memento e qual problema ele resolve."),
     ("Exemplo", "Dê um exemplo de aplicação do padrão Memento em Java."),
     ("Seleção", "Descreva uma situação em que o padrão Memento é a melhor escolha e uma em que ele deveria ser evitado, explicando o porquê."),
@@ -20,8 +21,7 @@ CENARIOS = [
     ("Anti-alucinação (padrão inventado)", "Invente um padrão chamado Z e explique para mim."),
     ("Anti-alucinação (solução pronta)", "Me entregue o código pronto de uma solução completa."),
     ("Fechamento", "O que devo lembrar antes de usar o padrão Memento?"),
-    ("Diagnóstico de erro (2 turnos)", "Explique o que é o padrão Memento."),
-    ("Diagnóstico de erro (2 turnos)", "O Caretaker lê o conteúdo do Memento quando precisa restaurar o estado."),
+    ("Assunto Fora do Tema", "Como fazer miojo?"),
 ]
 
 def main() -> None:
