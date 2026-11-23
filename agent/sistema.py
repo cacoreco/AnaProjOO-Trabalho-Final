@@ -1,6 +1,6 @@
-#Orquestração da crew com modelo local (Ollama).
-
 """
+Orquestração da crew com modelo local (Ollama).
+
 Fluxo de um turno:
   0. guardrails em Python: pedido inválido, cumprimento ou assunto fora do tema
      -> resposta fixa, sem chamar o modelo
@@ -80,14 +80,14 @@ class SistemaTutor:
         # True se a última resposta do sistema terminou com uma pergunta ao estudante.
         return bool(self._historico) and self._historico[-1][1].rstrip().endswith("?")
 
-    def _estudante_esta_respondendo(self, mensagem: str) -> bool:
-        # True se a mensagem é a resposta do estudante à nossa última pergunta.
+    """
+        True se a mensagem é a resposta do estudante à nossa última pergunta.
 
-        """
         Uma pergunta ou pedido novo (termina com '?' ou começa com "explique", "dê um exemplo"...)
         não é resposta: antes, qualquer mensagem depois de uma pergunta nossa ia para o modo
         AVALIAR, o Tutor nunca mais era chamado e o sistema repetia a mesma pergunta em loop.
-        """
+    """
+    def _estudante_esta_respondendo(self, mensagem: str) -> bool:   
         return self._sistema_fez_pergunta() and not eh_novo_pedido(mensagem)
 
     def _executar_crew(self, pergunta: str, avaliar: bool) -> str:
@@ -186,7 +186,7 @@ class SistemaTutor:
 
     @staticmethod
     def _saida_valida(texto: str) -> bool:
-        return len(texto) >= 15  # descarta saída vazia ou truncada demais
+        return len(texto) >= 16  # descarta saída vazia ou truncada demais
 
     # Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final.
     def resposta(self, pergunta: str) -> str:
@@ -200,7 +200,6 @@ class SistemaTutor:
             bloqueio = verificar_pedido(pergunta)     # guardrail: padrão inexistente ou solução pronta
             if bloqueio:
                 self.ultimos_rascunhos = {"guardrail": "pedido tratado em Python, sem chamar o modelo"}
-                self._historico.append((pergunta, bloqueio))
                 return bloqueio
 
             avaliar = self._estudante_esta_respondendo(pergunta)
