@@ -36,7 +36,9 @@ Os comandos a seguir devem ser rodados em um emulador de terminal:
 scripts/1.install-ollama.sh
 ```
 
-> Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (4096 tokens) e **corta o prompt em silêncio** quando ela estoura, o que apagaria as regras dos agentes. O `Modelfile` fixa `num_ctx 8192`. O CrewAI fala com o Ollama por um endereço que não permite ajustar esse valor por requisição, então a configuração precisa estar no modelo.
+> Por que a variante: o Ollama usa por padrão uma janela de contexto pequena (4096 tokens) e **corta o prompt em silêncio** quando ela estoura, o que apagaria as regras dos agentes. O `.modelfile` fixa `num_ctx 8192`. O CrewAI fala com o Ollama por um endereço que não permite ajustar esse valor por requisição, então a configuração precisa estar no modelo.
+
+> Com placa de vídeo existem variantes do pacote do Ollama (por exemplo, `ollama-cuda` para NVIDIA); sem GPU, o pacote `ollama` basta.
 
 ### 2. Ambiente Python 3.12
 
@@ -44,8 +46,7 @@ scripts/1.install-ollama.sh
 scripts/2.setup-python.sh
 ```
 
-> `uv` é o gerenciador que instala o Python 3.12 sem mexer no Python do sistema. Com placa de vídeo existem variantes do pacote do Ollama (por exemplo, `ollama-cuda` para NVIDIA); sem GPU, o pacote `ollama` basta.
-
+> `uv` é o gerenciador que instala o Python 3.12 sem mexer no Python do sistema.
 
 ### 3. Ativar o ambiente virtual python
 
@@ -70,7 +71,7 @@ source .venv/bin/activate.fish
 ```shell
 python -m cli "Explique o que é o padrão Memento"      # uma pergunta, imprime a resposta e encerra
 python -m cli                                          # modo conversa (digite 'sair' para encerrar)
-python -m tests                                        # roda os cenários do roteiro e salva em tests/resultados/
+python -m tests                                        # roda os cenários do roteiro e salva em `output/`
 ```
 
 #### Opções
@@ -128,7 +129,7 @@ Acessar http://localhost:7860
 | Problema                                                      | Explicação                                                                                                                                                |
 |---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `failed to run custom build command for pyo3-ffi`             | Você está no Python 3.14. Recrie o ambiente com `uv venv --python 3.12 .venv`.                                                                            |
-| `model not found`                                             | Falta rodar o `ollama create qwen2.5-3b-8k -f Modelfile`.                                                                                                 |
+| `model not found`                                             | Falta rodar o `ollama create qwen2.5-3b-8k -f .modelfile`.                                                                                                 |
 | `ModuleNotFoundError: No module named 'cli'`                  | Você não está na pasta raiz do projeto. Rode os comandos a partir dela.                                                                                   |
 | `ModuleNotFoundError: No module named 'crewai'`               | Você esqueceu de rodar o `activate` para ativar o `venv`                                                                                                  |
 | "Não consegui falar com o modelo local"                       | O Ollama está parado (`sudo systemctl start ollama`) ou a variante não existe (`ollama list`). A linha "Detalhe técnico" da mensagem mostra a causa real. |
