@@ -2,14 +2,13 @@
 
 from pathlib import Path
 
-PASTA_PROMPTS = Path(__file__).resolve().parent.parent / "prompts"
+PASTA_PROMPTS = Path("prompts")
+ARQUIVO_FATOS = "memento_fatos.md"
 SECOES = ("ROLE", "GOAL", "BACKSTORY")
-
 
 def carregar_fatos() -> str:
     # Lê a fonte de verdade sobre o Memento, usada pelos três agentes.
-    return (PASTA_PROMPTS / "memento_fatos.md").read_text(encoding="utf-8").strip()
-
+    return (PASTA_PROMPTS / ARQUIVO_FATOS).read_text(encoding="utf-8").strip()
 
 def carregar_prompt(nome: str, fatos: str) -> dict:
     # Lê prompts/<nome>.md e devolve {'role', 'goal', 'backstory'}.
