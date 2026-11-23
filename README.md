@@ -96,6 +96,8 @@ Acessar http://localhost:7860
 
 ## 🪾 Estrutura do projeto
 
+### Arquivos e Pastas:
+
 ```shell
 ├── agent/
 │   ├── __init__.py           # regras de importação
@@ -123,6 +125,9 @@ Acessar http://localhost:7860
 │   └── __main__.py           # roteiro de cenários de teste
 └── .modelfile                # variante do modelo com janela de contexto de 8192
 ```
+
+### Diagrama de Classes:
+![diagrama](img/diagrama-classes.png)
 
 ## 🐞Problemas comuns
 
