@@ -11,7 +11,7 @@ def coletar_argumentos():
     )
 
     parser.add_argument("prompt", nargs="?", default=None)
-    parser.add_argument('-m', '--modelo', default="ollama/qwen2.5-0.5b-8k", help="modelo de linguagem a ser usado")
+    parser.add_argument('-m', '--modelo', default="ollama/qwen2.5:0.5b-8k", help="modelo de linguagem a ser usado")
     parser.add_argument('-t', '--temperatura', type=float, default=0.2, help="baixa: menos criatividade, menos invenção")
     parser.add_argument('-j', '--janela', type=int, default=8192, help="tamanho da janela de contexto")
     parser.add_argument('-p', '--porta', type=int, default=11434, help="porta em que o ollama está rodando")

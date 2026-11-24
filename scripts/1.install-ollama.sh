@@ -44,7 +44,7 @@ ollama create "$modelo-8k" -f "$modelfile"  || sair_com_erro "Falha ao criar o m
 if command -v curl > /dev/null; then
     curl http://localhost:11434/v1/chat/completions \
         -H "Content-Type: application/json" \
-        -d '{"model":"qwen2.5-0.5b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}' \
+        -d '{"model":"qwen2.5:0.5b-8k","messages":[{"role":"user","content":"Diga olá em uma frase."}]}' \
     || sair_com_erro "Erro ao testar o modelo"
 else
     sair_com_erro "Commando \"curl\" não encontrado."
