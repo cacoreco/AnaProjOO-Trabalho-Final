@@ -34,4 +34,3 @@ def carregar_prompt(nome: str, fatos: str, limite_linhas: int = 14) -> dict:
     if faltando:
         raise ValueError(f"Prompt '{nome}.md' sem as seções: {faltando}")
     return {chave: "\n".join(linhas).strip() for chave, linhas in secoes.items()}
- 
