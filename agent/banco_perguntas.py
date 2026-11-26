@@ -6,14 +6,15 @@
 #   - texto:    a pergunta (termina com '?', usa SOMENTE o exemplo do Editor);
 #   - gabarito: a resposta esperada, tirada dos FATOS, entregue ao Inquiridor para ele comparar;
 #   - dica:     a pista que o Inquiridor dá se o estudante errar (sem revelar o gabarito).
-
+ 
 from dataclasses import dataclass
-
+ 
 from .guardrails import _normalizar
-
-PREFIXO = "Aqui vai uma pergunta para testar seu conhecimento: "
-
-
+ 
+# Frase de introdução de TODA pergunta final (do banco ou do modelo): a pergunta não aparece solta.
+PREFIXO = "Aqui vai uma pergunta para testar seus conhecimentos: "
+ 
+ 
 @dataclass(frozen=True)
 class Pergunta:
     tema: str
@@ -21,8 +22,8 @@ class Pergunta:
     gabarito: str
     dica: str
     palavras: tuple = ()  # trechos (sem acento) que, se aparecerem na mensagem, escolhem esta pergunta
-
-
+ 
+ 
 BANCO = (
     Pergunta(
         tema="participantes",
@@ -91,8 +92,8 @@ BANCO = (
         palavras=("evitar", "quando usar", "melhor escolha", "memoria", "lembrar", "antes de usar"),
     ),
 )
-
-
+ 
+ 
 def escolher_pergunta(mensagem: str, feitas: set) -> Pergunta:
     """Escolhe a pergunta cujo tema combina com a mensagem; prefere as que ainda não foram feitas."""
     n = _normalizar(mensagem)
@@ -101,3 +102,4 @@ def escolher_pergunta(mensagem: str, feitas: set) -> Pergunta:
         if any(palavra in n for palavra in p.palavras):
             return p
     return disponiveis[0]
+ 

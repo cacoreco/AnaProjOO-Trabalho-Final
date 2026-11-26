@@ -1,6 +1,6 @@
 """
 Orquestração da crew com modelo local (Ollama).
-
+ 
 Fluxo de um turno:
   0. guardrails em Python: pedido inválido, cumprimento ou assunto fora do tema (guardrails.py)
     -> resposta fixa, sem chamar o modelo
@@ -12,22 +12,27 @@ Fluxo de um turno:
        -> limpar a saída (preâmbulo, repetição, corte no meio da frase)
        -> verificar erros conhecidos; o Guardião (modelo) só é chamado se houver algum
        -> no pedido de exemplo, usar o código canônico dos FATOS
-       -> garantir que a resposta termine com uma pergunta válida (do Inquiridor ou do banco de perguntas)
+       -> no pedido conceitual, anexar a lista dos três participantes tirada dos FATOS
+       -> garantir que a resposta termine com uma pergunta válida (do Inquiridor ou do banco de perguntas),
+          sempre com a frase de introdução "Aqui vai uma pergunta para testar seus conhecimentos: ..."
 """
-
+ 
 import logging
-
+ 
 from crewai import LLM, Agent, Crew, Process, Task
-
+ 
 from .prompts import carregar_fatos, carregar_prompt
 from .guardrails import eh_novo_pedido, verificar_pedido, verificar_tema
 from .pos_processamento import (
     anexar_pergunta,
+    eh_pedido_conceitual,
     eh_pedido_de_exemplo,
     eh_recusa,
     extrair_codigo_canonico,
+    extrair_participantes,
     extrair_pergunta,
     garantir_codigo,
+    garantir_participantes,
     limpar_saida,
     parece_resposta_do_tema,
     remover_problemas,
@@ -45,7 +50,7 @@ MAX_TOKENS_POR_AGENTE = 800
 # Tamanho máximo da explicação, em linhas. É a ÚNICA fonte desse limite: entra nos prompts pelo marcador
 # {limite_linhas} e na instrução de cada tarefa (antes eram 8, 10, 12 e 15 em lugares diferentes).
 LIMITE_LINHAS = 14
-
+ 
 # --- Mensagens de erro amigáveis -------------------------------------------
 MSG_VAZIA = "Digite uma pergunta sobre o padrão Memento."
 MSG_FALHA_MODELO = (
@@ -69,10 +74,14 @@ class SistemaTutor:
     def __init__(self, model: str, base_url: str, temperature: float, context_window_size: int) -> None:
         """
         Inicia o sistema de acordo com as opções especificadas. As opções saem dos argumentos da linha de comando
+ 
+        Também extrai dos FATOS o que o pós-processamento anexa às respostas: o exemplo em Java (pedidos de exemplo)
+        e a lista dos três participantes (pedidos conceituais). Assim esses trechos nunca dependem do modelo.
         """
-
+ 
         fatos = carregar_fatos()
         self._codigo_canonico = extrair_codigo_canonico(fatos)  # exemplo em Java dos FATOS, usado nos pedidos de exemplo
+        self._participantes = extrair_participantes(fatos)      # lista dos 3 participantes dos FATOS, usada nos pedidos conceituais
         self._llm = LLM(
             model=model,
             base_url=base_url,
@@ -80,11 +89,11 @@ class SistemaTutor:
             context_window_size=int(context_window_size),
             max_tokens=MAX_TOKENS_POR_AGENTE,
         )
-
+ 
         self._tutor = self._criar_agente("tutor", fatos)
         self._inquiridor = self._criar_agente("inquiridor", fatos)
         self._guardiao = self._criar_agente("guardiao", fatos)
-
+ 
         self._historico = []            # memória da conversa: lista de (pergunta, resposta)
         self._pendente = None           # pergunta do banco ainda sem resposta (tem gabarito e dica), ou None
         self._perguntas_feitas = set()  # temas do banco já usados nesta conversa
@@ -93,15 +102,15 @@ class SistemaTutor:
     def _criar_agente(self, nome: str, fatos: str) -> Agent:
         """
         Cria um novo agente CrewAI
-
+ 
         Args:
             nome(str): nome do agente
             fatos(str): fatos retirados do arquivo de fatos
-
+ 
         Retorna:
             Agent: objeto do tipo agente
         """
-
+ 
         prompt = carregar_prompt(nome, fatos, LIMITE_LINHAS)
         return Agent(
             role=prompt["role"],
@@ -116,7 +125,7 @@ class SistemaTutor:
         """
         Retorna o histórico armazenado, se tiver
         """
-
+ 
         if not self._historico:
             return "(conversa nova, sem histórico)"
         linhas = []
@@ -129,7 +138,7 @@ class SistemaTutor:
         """
         Retorna True se a última resposta do sistema terminou com uma pergunta ao estudante.
         """
-
+ 
         return bool(self._historico) and self._historico[-1][1].rstrip().endswith("?")
  
     def _estudante_esta_respondendo(self, mensagem: str) -> bool:
@@ -140,19 +149,19 @@ class SistemaTutor:
         não é resposta: antes, qualquer mensagem depois de uma pergunta nossa ia para o modo
         AVALIAR, o Tutor nunca mais era chamado e o sistema repetia a mesma pergunta em loop.
         """
-
+ 
         return self._sistema_fez_pergunta() and not eh_novo_pedido(mensagem)
  
     # --- Execução dos agentes -------------------------------------------------
  
-    def _rodar(self, nomeadas: list[(str, Task)]) -> None:
+    def _rodar(self, nomeadas: list[tuple[str, Task]]) -> None:
         """
         Roda as tarefas em sequência e guarda a saída de cada agente, para ver onde uma resposta ruim nasceu.
-
+ 
         Args:
-            nomeadas (list[(str, Task)]): tarefas nomeadas a serem executadas
+            nomeadas (list[tuple[str, Task]]): pares (nome do agente, tarefa) a serem executados
         """
-
+ 
         crew = Crew(
             agents=[tarefa.agent for _, tarefa in nomeadas],
             tasks=[tarefa for _, tarefa in nomeadas],
@@ -160,7 +169,7 @@ class SistemaTutor:
             verbose=False,
         )
         crew.kickoff()
-
+ 
         for nome, tarefa in nomeadas:
             self.ultimos_rascunhos[nome] = self._saida_da_tarefa(tarefa)
  
@@ -168,7 +177,7 @@ class SistemaTutor:
         """
         Fluxo 1: Tutor explica; Inquiridor escreve uma pergunta. Devolve o rascunho do Tutor.
         """
-
+ 
         # O texto é montado em Python (f-string), sem variáveis do CrewAI.
         contexto = (
             f"HISTÓRICO RECENTE:\n{self._texto_historico()}\n\n"
@@ -198,7 +207,7 @@ class SistemaTutor:
         """
         Fluxo 2: Inquiridor avalia a resposta do estudante. Devolve o feedback com a próxima pergunta.
         """
-
+ 
         if self._pendente is not None:
             # Pergunta do banco: o Inquiridor recebe o gabarito (para comparar) e a dica (para dar se errar).
             ultima_pergunta = self._pendente.texto
@@ -225,13 +234,13 @@ class SistemaTutor:
     def _revisar(self, texto: str, avaliando: bool) -> str:
         """
         Revisão em duas camadas.
-
+ 
         1) Python procura erros conhecidos (agent/pos_processamento.py).
         2) O Guardião (modelo) só é chamado se achar algum, e corrige SOMENTE o que foi apontado.
-
+ 
         Se ele não corrigir, as frases com erro são removidas: o texto final nunca carrega um erro conhecido.
         """
-
+ 
         problemas = verificar_rascunho(texto, avaliando)
         if not problemas:
             self.ultimos_rascunhos["guardiao"] = "(não chamado: nenhum erro conhecido detectado)"
@@ -261,24 +270,41 @@ class SistemaTutor:
  
     @staticmethod
     def _saida_da_tarefa(tarefa: Task) -> str:
+        """
+        Retorna o texto que o agente escreveu na tarefa, ou "" se não houver saída
+        """
+ 
         saida = getattr(tarefa, "output", None)
         return str(getattr(saida, "raw", "") or "").strip()
  
     @staticmethod
     def _saida_valida(texto: str) -> bool:
+        """
+        Retorna True se o texto tem tamanho mínimo para ser uma resposta (descarta saída vazia ou truncada demais)
+        """
+ 
         return len(texto) >= 16  # descarta saída vazia ou truncada demais
  
     def resposta(self, pergunta: str) -> str:
         """
         Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final.
-
+ 
+        Etapas de um turno:
+            1. Entrada vazia ou longa demais é tratada; guardrails respondem sem chamar o modelo (pedido inválido, fora do tema).
+            2. O modelo gera o rascunho: Tutor e Inquiridor (pedido novo) ou só o Inquiridor (resposta do estudante).
+            3. Recusa do modelo vira a mensagem padrão; texto que não fala do assunto é descartado.
+            4. Revisão: o Guardião só é chamado se o verificador achar um erro conhecido.
+            5. Pedido de exemplo: o código Java vem dos FATOS. Pedido conceitual: a lista de participantes vem dos FATOS.
+            6. A resposta termina com uma pergunta, sempre com a frase de introdução. Com o código na tela, a pergunta
+               é a do banco sobre ele; se vier do banco, o gabarito e a dica ficam guardados para avaliar a resposta.
+ 
         Args:
             pergunta (str): prompt digitado pelo usuário
-        
+ 
         Retorna:
             str: resposta gerada pelo modelo
         """
-
+ 
         try:
             pergunta = (pergunta or "").strip()
             if not pergunta:                          # tratamento: entrada vazia
@@ -318,13 +344,17 @@ class SistemaTutor:
                     return MSG_SAIDA_INVALIDA
  
             texto = self._revisar(texto, avaliando=avaliar)
-            if not avaliar and eh_pedido_de_exemplo(pergunta):
+            com_codigo = not avaliar and eh_pedido_de_exemplo(pergunta) and bool(self._codigo_canonico)
+            if com_codigo:                            # pedido de exemplo: o código é sempre o dos FATOS
                 texto = garantir_codigo(texto, self._codigo_canonico)
+            if not avaliar and eh_pedido_conceitual(pergunta):  # pedido conceitual: a lista de participantes é a dos FATOS
+                texto = garantir_participantes(texto, self._participantes)
             if not self._saida_valida(texto):         # a revisão pode ter removido frases demais
                 return MSG_SAIDA_INVALIDA
  
             texto, do_banco = anexar_pergunta(
-                texto, pergunta, self.ultimos_rascunhos.get("inquiridor", ""), self._perguntas_feitas
+                texto, pergunta, self.ultimos_rascunhos.get("inquiridor", ""), self._perguntas_feitas,
+                preferir_banco=com_codigo,            # com o código na tela, a pergunta é a do banco sobre ele
             )
             self._pendente = do_banco                 # None: pergunta do próprio modelo, sem gabarito
             if do_banco is not None:

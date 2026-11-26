@@ -12,7 +12,7 @@ import re
 from difflib import SequenceMatcher
 from typing import NamedTuple
  
-from .banco_perguntas import Pergunta, escolher_pergunta
+from .banco_perguntas import PREFIXO, Pergunta, escolher_pergunta
 from .guardrails import CATALOGO_GOF
 from .guardrails import _normalizar as normalizar  # mesma normalização (minúsculas, sem acento) do guardrails
  
@@ -34,7 +34,9 @@ def remover_preambulo(texto: str) -> str:
             r"(resposta do|certamente|claro|com certeza|aqui esta|responda a seguir)", primeira
         ):
             linhas = linhas[1:]
-    return re.sub(r"(?i)^responda:\s*", "", "\n".join(linhas).strip())
+    texto = re.sub(r"(?i)^responda:\s*", "", "\n".join(linhas).strip())
+    texto = re.sub(r"(?i)^(?:certamente|claro|com certeza)[.!]\s+", "", texto)  # "Certamente. Antes de usar..."
+    return re.sub(r"(?i)^explicado anteriormente[.:]?\s*", "", texto)  # o modelo remete a uma explicação que não existe
  
  
 def remover_repeticoes(texto: str) -> str:
@@ -129,6 +131,12 @@ _REGRAS = (
         True, True,
     ),
     _Regra(
+        "caretaker_salva_restaura",
+        "Está errado: salvar e restaurar são métodos do Originator; o Caretaker só guarda e devolve mementos.",
+        re.compile(r"caretaker\b(?:(?!originator)[^.!?]){0,60}?\b(?:salva|restaura|salvar|restaurar)\w*"),
+        True, True,
+    ),
+    _Regra(
         "interfaces_invertidas",
         "Está invertido: a interface estreita (narrow, vazia) é a que o Caretaker vê; a larga (wide) é a do Originator.",
         re.compile(
@@ -167,7 +175,7 @@ _REGRAS = (
     _Regra(
         "exemplo_fora_do_editor",
         "Use somente o exemplo do Editor com desfazer; remova exemplos de outros assuntos.",
-        re.compile(r"\b(?:banco de dados|transac\w+|gerenciador de estado|videogames?|jogos?|lista de tarefas)\b"),
+        re.compile(r"\b(?:banco de dados|transac\w+|gerenciador de estado|videogames?|jogos?|lista de tarefas|pdf)\b"),
         False, False,
     ),
 )
@@ -278,13 +286,62 @@ def extrair_codigo_canonico(fatos: str) -> str:
     return "```java\n" + codigo + "\n\n// Uso:\n" + "\n".join(uso) + "\n```"
  
  
+def _tirar_frase_de_apresentacao(parte: str) -> str:
+    """Antes de um bloco de código o modelo escreve algo como "Exemplo completo:": remove só essa última frase."""
+    fim = parte.rstrip()
+    if not fim.endswith(":"):
+        return parte
+    corte = max(fim.rfind(". "), fim.rfind("! "), fim.rfind("? "), fim.rfind("\n"))
+    return fim[: corte + 1] if corte >= 0 else ""
+ 
+ 
 def garantir_codigo(texto: str, codigo: str) -> str:
     """Troca qualquer bloco de código do modelo pelo código canônico (o modelo pequeno costuma errá-lo)."""
     if not codigo:
         return texto
-    sem_blocos = re.sub(r"(?:^[^\n]*:[ \t]*\n+)?```.*?```", "", texto, flags=re.S | re.M)
-    sem_blocos = re.sub(r"\n{3,}", "\n\n", sem_blocos).strip()
-    return f"{sem_blocos}\n\n{_LEGENDA}\n\n{codigo}".strip()
+    partes = _RE_CERCA.split(texto)  # texto, código, texto, código...
+    mantidas = []
+    for i, parte in enumerate(partes):
+        if parte.startswith("```"):
+            continue  # bloco do modelo: descartado
+        antes_de_codigo = i + 1 < len(partes) and partes[i + 1].startswith("```")
+        mantidas.append(_tirar_frase_de_apresentacao(parte) if antes_de_codigo else parte)
+    explicacao = re.sub(r"\n{3,}", "\n\n", "".join(mantidas)).strip()
+    n = normalizar(explicacao)
+    ja_diz_os_papeis = all(t in n for t in ("originator", "estadoeditor", "caretaker", "historico"))
+    legenda = "" if ja_diz_os_papeis else _LEGENDA
+    return "\n\n".join(parte for parte in (explicacao, legenda, codigo) if parte)
+ 
+ 
+# ---------------------------------------------------------------------------------------------
+# 3b. Participantes: na explicação conceitual, a lista vem dos FATOS
+# ---------------------------------------------------------------------------------------------
+ 
+_CLASSE_NO_EXEMPLO = {"Originator": "Editor", "Memento": "EstadoEditor", "Caretaker": "Historico"}
+_RE_PARTICIPANTE = re.compile(r"^- (Originator|Memento|Caretaker): (.+)$", re.M)
+_SINAIS_CONCEITUAIS = ("o que e", "qual problema", "participante", "conceito", "explique o padrao", "explique o memento")
+ 
+ 
+def eh_pedido_conceitual(mensagem: str) -> bool:
+    """True se o estudante pediu a explicação do padrão em si (e não um exemplo, um erro, uma comparação...)."""
+    n = normalizar(mensagem)
+    if eh_pedido_de_exemplo(mensagem) or any(trecho in n for trecho in _NAO_PEDE_CODIGO):
+        return False
+    return any(sinal in n for sinal in _SINAIS_CONCEITUAIS)
+ 
+ 
+def extrair_participantes(fatos: str) -> str:
+    """Monta, a partir dos FATOS, a lista dos três participantes ligada ao exemplo do Editor, ou ''."""
+    achados = {nome: texto.strip() for nome, texto in _RE_PARTICIPANTE.findall(fatos)}
+    if set(achados) != set(_CLASSE_NO_EXEMPLO):
+        return ""
+    linhas = [f"- **{nome} ({_CLASSE_NO_EXEMPLO[nome]}):** {achados[nome]}" for nome in _CLASSE_NO_EXEMPLO]
+    return "Os três participantes, no exemplo do Editor com desfazer:\n" + "\n".join(linhas)
+ 
+ 
+def garantir_participantes(texto: str, participantes: str) -> str:
+    """Anexa a lista de participantes dos FATOS: o modelo pequeno costuma resumi-la e errar os papéis."""
+    return f"{texto.rstrip()}\n\n{participantes}" if participantes else texto
  
  
 # ---------------------------------------------------------------------------------------------
@@ -292,6 +349,10 @@ def garantir_codigo(texto: str, codigo: str) -> str:
 # ---------------------------------------------------------------------------------------------
  
 _RE_META_PERGUNTA = re.compile(r"\b(?:fatos|rascunho|estudante|feedback)\b")
+# A pergunta é mostrada sozinha, sem a frase que o modelo escreveu antes dela: referências a esse contexto ficam sem sentido.
+_RE_REFERENCIA_SOLTA = re.compile(
+    r"\b(?:essa|esta|esse|este|nessa|nesta|nesse|neste)\s+(?:situacao|cenario|caso|exemplo|aplicacao)\b|\b(?:isso|isto|acima|anterior)\b"
+)
  
  
 def extrair_pergunta(texto: str) -> str:
@@ -304,6 +365,20 @@ def extrair_pergunta(texto: str) -> str:
     return ""
  
  
+_NOMES_PROPRIOS = {normalizar(n) for n in CATALOGO_GOF} | {"editor", "originator", "caretaker", "estadoeditor", "historico", "java", "uml"}
+ 
+ 
+def com_introducao(pergunta: str) -> str:
+    """Põe a frase de introdução antes da pergunta ("Aqui vai uma pergunta para testar seus conhecimentos: ...")."""
+    pergunta = pergunta.strip()
+    if normalizar(pergunta).startswith("aqui vai uma pergunta"):
+        return pergunta  # já tem introdução (singular ou plural)
+    primeira = normalizar(pergunta.split()[0]).strip(",;:")
+    if primeira not in _NOMES_PROPRIOS:  # "Qual..." vira "qual...", mas "Memento..." continua com inicial maiúscula
+        pergunta = pergunta[0].lower() + pergunta[1:]
+    return PREFIXO + pergunta
+ 
+ 
 def pergunta_valida(candidata: str, mensagem: str, texto: str = "") -> bool:
     """Uma pergunta só serve se for uma pergunta de verdade e não um eco do estudante ou do próprio texto."""
     n = normalizar(candidata)
@@ -311,29 +386,36 @@ def pergunta_valida(candidata: str, mensagem: str, texto: str = "") -> bool:
         return False
     if "entendeu" in n or _RE_META_PERGUNTA.search(n):
         return False
+    if _RE_REFERENCIA_SOLTA.search(n) or verificar_rascunho(candidata):
+        return False  # "essa situação...", "aplicar isso..." (a frase anterior não vai junto) ou exemplo fora do Editor
     m = normalizar(mensagem)
     if n in m or SequenceMatcher(None, n, m).ratio() >= 0.75:  # eco da pergunta do estudante
         return False
     return not (texto and n in normalizar(texto))
  
  
-def anexar_pergunta(texto: str, mensagem: str, rascunho_inquiridor: str, feitas: set) -> tuple:
+def anexar_pergunta(texto: str, mensagem: str, rascunho_inquiridor: str, feitas: set, preferir_banco: bool = False) -> tuple:
     """Garante que o texto termine com uma pergunta válida.
  
     Devolve (texto, pergunta_do_banco). pergunta_do_banco é None quando a pergunta veio do próprio
     modelo; quando veio do banco, traz o gabarito e a dica para a avaliação da próxima resposta.
+    preferir_banco=True ignora a pergunta do modelo (usado quando o código canônico foi anexado: a pergunta
+    do banco é sobre aquele código exato).
     """
     ultima = extrair_pergunta(texto) if texto.rstrip().endswith("?") else ""
     if ultima:
+        posicao = texto.rfind(ultima)
         if pergunta_valida(ultima, mensagem):
-            return texto, None
-        posicao = texto.rfind(ultima)  # termina com '?', mas é um eco: tira
-        if posicao >= 0:
+            if posicao < 0:
+                return texto, None
+            anterior = texto[:posicao].rstrip()  # o feedback; a pergunta ganha a frase de introdução
+            return f"{anterior}\n\n{com_introducao(ultima)}".strip(), None
+        if posicao >= 0:  # termina com '?', mas é um eco: tira
             texto = texto[:posicao].rstrip()
  
-    candidata = extrair_pergunta(rascunho_inquiridor)
+    candidata = "" if preferir_banco else extrair_pergunta(rascunho_inquiridor)
     if candidata and pergunta_valida(candidata, mensagem, texto):
-        return f"{texto}\n\n{candidata}".strip(), None
+        return f"{texto}\n\n{com_introducao(candidata)}".strip(), None
  
     pergunta: Pergunta = escolher_pergunta(mensagem, feitas)
     return f"{texto}\n\n{pergunta.texto}".strip(), pergunta
