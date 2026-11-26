@@ -269,15 +269,15 @@ class SistemaTutor:
         return len(texto) >= 16  # descarta saída vazia ou truncada demais
  
     def resposta(self, pergunta: str) -> str:
-    """
-    Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final.
+        """
+        Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final.
 
-    Args:
-        pergunta (str): prompt digitado pelo usuário
-    
-    Retorna:
-        str: resposta gerada pelo modelo
-    """
+        Args:
+            pergunta (str): prompt digitado pelo usuário
+        
+        Retorna:
+            str: resposta gerada pelo modelo
+        """
 
         try:
             pergunta = (pergunta or "").strip()
