@@ -1,23 +1,25 @@
 """
 Orquestração da crew com modelo local (Ollama).
- 
+
 Fluxo de um turno:
-  0. guardrails em Python: pedido inválido, cumprimento ou assunto fora do tema
-     -> resposta fixa, sem chamar o modelo
-  1. estudante fez uma pergunta/pedido novo:   Tutor -> Inquiridor
-  2. estudante respondeu a uma pergunta nossa: Inquiridor (recebe o gabarito e a dica, quando existem)
-     (uma pergunta nova feita logo depois de uma pergunta nossa volta para o fluxo 1)
+  0. guardrails em Python: pedido inválido, cumprimento ou assunto fora do tema (guardrails.py)
+    -> resposta fixa, sem chamar o modelo
+  1. estudante fez uma pergunta/pedido novo:
+    -> Tutor -> Inquiridor
+  2. estudante respondeu a uma pergunta nossa:
+    -> Inquiridor recebe o gabarito e a dica, quando existem (uma pergunta nova feita logo depois de uma pergunta nossa volta para o fluxo 1)
   3. pós-processamento em Python (agent/pos_processamento.py):
-       limpar a saída (preâmbulo, repetição, corte no meio da frase)
+       -> limpar a saída (preâmbulo, repetição, corte no meio da frase)
        -> verificar erros conhecidos; o Guardião (modelo) só é chamado se houver algum
        -> no pedido de exemplo, usar o código canônico dos FATOS
        -> garantir que a resposta termine com uma pergunta válida (do Inquiridor ou do banco de perguntas)
 """
- 
+
 import logging
- 
+
 from crewai import LLM, Agent, Crew, Process, Task
- 
+
+from .prompts import carregar_fatos, carregar_prompt
 from .guardrails import eh_novo_pedido, verificar_pedido, verificar_tema
 from .pos_processamento import (
     anexar_pergunta,
@@ -32,7 +34,6 @@ from .pos_processamento import (
     revisao_aceitavel,
     verificar_rascunho,
 )
-from .prompts import carregar_fatos, carregar_prompt
  
 # --- Limites para não estourar a janela de 8k ------------------------------
 TURNOS_NO_HISTORICO = 3                # quantos pares pergunta/resposta entram no prompt
@@ -44,7 +45,7 @@ MAX_TOKENS_POR_AGENTE = 800
 # Tamanho máximo da explicação, em linhas. É a ÚNICA fonte desse limite: entra nos prompts pelo marcador
 # {limite_linhas} e na instrução de cada tarefa (antes eram 8, 10, 12 e 15 em lugares diferentes).
 LIMITE_LINHAS = 14
- 
+
 # --- Mensagens de erro amigáveis -------------------------------------------
 MSG_VAZIA = "Digite uma pergunta sobre o padrão Memento."
 MSG_FALHA_MODELO = (
@@ -60,11 +61,16 @@ MSG_NAO_SEI = (
  
 log = logging.getLogger(__name__)
  
- 
 class SistemaTutor:
-    # Tutor multiagente do padrão Memento. Uma instância = uma conversa.
+    """
+    Tutor multiagente do padrão Memento. Uma instância = uma conversa.
+    """
  
     def __init__(self, model: str, base_url: str, temperature: float, context_window_size: int) -> None:
+        """
+        Inicia o sistema de acordo com as opções especificadas. As opções saem dos argumentos da linha de comando
+        """
+
         fatos = carregar_fatos()
         self._codigo_canonico = extrair_codigo_canonico(fatos)  # exemplo em Java dos FATOS, usado nos pedidos de exemplo
         self._llm = LLM(
@@ -74,26 +80,43 @@ class SistemaTutor:
             context_window_size=int(context_window_size),
             max_tokens=MAX_TOKENS_POR_AGENTE,
         )
+
         self._tutor = self._criar_agente("tutor", fatos)
         self._inquiridor = self._criar_agente("inquiridor", fatos)
         self._guardiao = self._criar_agente("guardiao", fatos)
-        self._historico = []          # memória da conversa: lista de (pergunta, resposta)
-        self._pendente = None         # pergunta do banco ainda sem resposta (tem gabarito e dica), ou None
+
+        self._historico = []            # memória da conversa: lista de (pergunta, resposta)
+        self._pendente = None           # pergunta do banco ainda sem resposta (tem gabarito e dica), ou None
         self._perguntas_feitas = set()  # temas do banco já usados nesta conversa
-        self.ultimos_rascunhos = {}   # saída de cada agente no último turno (depuração e testes)
+        self.ultimos_rascunhos = {}     # saída de cada agente no último turno (depuração e testes)
  
     def _criar_agente(self, nome: str, fatos: str) -> Agent:
-        p = carregar_prompt(nome, fatos, LIMITE_LINHAS)
+        """
+        Cria um novo agente CrewAI
+
+        Args:
+            nome(str): nome do agente
+            fatos(str): fatos retirados do arquivo de fatos
+
+        Retorna:
+            Agent: objeto do tipo agente
+        """
+
+        prompt = carregar_prompt(nome, fatos, LIMITE_LINHAS)
         return Agent(
-            role=p["role"],
-            goal=p["goal"],
-            backstory=p["backstory"],
+            role=prompt["role"],
+            goal=prompt["goal"],
+            backstory=prompt["backstory"],
             llm=self._llm,
             allow_delegation=False,  # os papéis são fixos: ninguém delega para outro agente
             verbose=False,
         )
  
     def _texto_historico(self) -> str:
+        """
+        Retorna o histórico armazenado, se tiver
+        """
+
         if not self._historico:
             return "(conversa nova, sem histórico)"
         linhas = []
@@ -103,23 +126,33 @@ class SistemaTutor:
         return "\n".join(linhas)
  
     def _sistema_fez_pergunta(self) -> bool:
-        # True se a última resposta do sistema terminou com uma pergunta ao estudante.
+        """
+        Retorna True se a última resposta do sistema terminou com uma pergunta ao estudante.
+        """
+
         return bool(self._historico) and self._historico[-1][1].rstrip().endswith("?")
  
     def _estudante_esta_respondendo(self, mensagem: str) -> bool:
         """
-        True se a mensagem é a resposta do estudante à nossa última pergunta.
+        Retorna True se a mensagem é a resposta do estudante à nossa última pergunta.
  
         Uma pergunta ou pedido novo (termina com '?' ou começa com "explique", "dê um exemplo"...)
         não é resposta: antes, qualquer mensagem depois de uma pergunta nossa ia para o modo
         AVALIAR, o Tutor nunca mais era chamado e o sistema repetia a mesma pergunta em loop.
         """
+
         return self._sistema_fez_pergunta() and not eh_novo_pedido(mensagem)
  
     # --- Execução dos agentes -------------------------------------------------
  
-    def _rodar(self, nomeadas: list) -> None:
-        # Roda as tarefas em sequência e guarda a saída de cada agente, para ver onde uma resposta ruim nasceu.
+    def _rodar(self, nomeadas: list[(str, Task)]) -> None:
+        """
+        Roda as tarefas em sequência e guarda a saída de cada agente, para ver onde uma resposta ruim nasceu.
+
+        Args:
+            nomeadas (list[(str, Task)]): tarefas nomeadas a serem executadas
+        """
+
         crew = Crew(
             agents=[tarefa.agent for _, tarefa in nomeadas],
             tasks=[tarefa for _, tarefa in nomeadas],
@@ -127,11 +160,15 @@ class SistemaTutor:
             verbose=False,
         )
         crew.kickoff()
+
         for nome, tarefa in nomeadas:
             self.ultimos_rascunhos[nome] = self._saida_da_tarefa(tarefa)
  
     def _explicar(self, pergunta: str) -> str:
-        """Fluxo 1: Tutor explica; Inquiridor escreve uma pergunta. Devolve o rascunho do Tutor."""
+        """
+        Fluxo 1: Tutor explica; Inquiridor escreve uma pergunta. Devolve o rascunho do Tutor.
+        """
+
         # O texto é montado em Python (f-string), sem variáveis do CrewAI.
         contexto = (
             f"HISTÓRICO RECENTE:\n{self._texto_historico()}\n\n"
@@ -158,7 +195,10 @@ class SistemaTutor:
         return self.ultimos_rascunhos["tutor"]
  
     def _avaliar(self, resposta_do_estudante: str) -> str:
-        """Fluxo 2: Inquiridor avalia a resposta do estudante. Devolve o feedback com a próxima pergunta."""
+        """
+        Fluxo 2: Inquiridor avalia a resposta do estudante. Devolve o feedback com a próxima pergunta.
+        """
+
         if self._pendente is not None:
             # Pergunta do banco: o Inquiridor recebe o gabarito (para comparar) e a dica (para dar se errar).
             ultima_pergunta = self._pendente.texto
@@ -184,10 +224,14 @@ class SistemaTutor:
  
     def _revisar(self, texto: str, avaliando: bool) -> str:
         """
-        Revisão em duas camadas. 1) Python procura erros conhecidos (agent/pos_processamento.py).
+        Revisão em duas camadas.
+
+        1) Python procura erros conhecidos (agent/pos_processamento.py).
         2) O Guardião (modelo) só é chamado se achar algum, e corrige SOMENTE o que foi apontado.
+
         Se ele não corrigir, as frases com erro são removidas: o texto final nunca carrega um erro conhecido.
         """
+
         problemas = verificar_rascunho(texto, avaliando)
         if not problemas:
             self.ultimos_rascunhos["guardiao"] = "(não chamado: nenhum erro conhecido detectado)"
@@ -224,8 +268,17 @@ class SistemaTutor:
     def _saida_valida(texto: str) -> bool:
         return len(texto) >= 16  # descarta saída vazia ou truncada demais
  
-    # Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final.
     def resposta(self, pergunta: str) -> str:
+    """
+    Ponto de entrada: recebe a mensagem do estudante e devolve a resposta final.
+
+    Args:
+        pergunta (str): prompt digitado pelo usuário
+    
+    Retorna:
+        str: resposta gerada pelo modelo
+    """
+
         try:
             pergunta = (pergunta or "").strip()
             if not pergunta:                          # tratamento: entrada vazia
