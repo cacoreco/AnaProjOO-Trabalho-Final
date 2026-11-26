@@ -181,13 +181,16 @@ _REGRAS = (
 )
  
  
+_RE_FIM_DE_ITEM = re.compile(r"(?<=[.!?;])\s+")  # na verificação, ";" também fecha um item ("a; b; c" são 3 itens)
+ 
+ 
 def _frases(texto: str):
-    """Frases do texto, sem os blocos de código."""
+    """Frases do texto, sem os blocos de código. ";" separa itens: uma regra não pode casar entre dois deles."""
     for parte in _RE_CERCA.split(texto):
         if parte.startswith("```"):
             continue
         for linha in parte.splitlines():
-            for frase in _RE_FIM_DE_FRASE.split(linha.strip()):
+            for frase in _RE_FIM_DE_ITEM.split(linha.strip()):
                 if frase:
                     yield frase
  
@@ -344,6 +347,34 @@ def garantir_participantes(texto: str, participantes: str) -> str:
     return f"{texto.rstrip()}\n\n{participantes}" if participantes else texto
  
  
+_SINAIS_DE_FECHAMENTO = ("lembrar", "antes de usar", "checklist", "cuidados")
+ 
+ 
+def eh_pedido_de_checklist(mensagem: str) -> bool:
+    """True se o estudante perguntou o que conferir antes de usar o padrão ("O que devo lembrar antes de usar...")."""
+    n = normalizar(mensagem)
+    return not eh_pedido_de_exemplo(mensagem) and any(sinal in n for sinal in _SINAIS_DE_FECHAMENTO)
+ 
+ 
+def extrair_checklist(fatos: str) -> str:
+    """Monta, a partir dos FATOS, a lista numerada "Checklist antes de usar o Memento", ou ''."""
+    linhas = fatos.splitlines()
+    inicio = next((i for i, l in enumerate(linhas) if normalizar(l).startswith("checklist antes de usar")), None)
+    if inicio is None:
+        return ""
+    itens = []
+    for linha in linhas[inicio + 1:]:
+        if not re.match(r"^\d+\. ", linha):
+            break
+        itens.append(linha.strip())
+    return "Confira cada ponto antes de usar o Memento:\n" + "\n".join(itens) if len(itens) >= 3 else ""
+ 
+ 
+def garantir_checklist(texto: str, checklist: str) -> str:
+    """Anexa o checklist dos FATOS: o modelo pequeno costuma resumir os itens e perder ou trocar alguns."""
+    return f"{texto.rstrip()}\n\n{checklist}" if checklist else texto
+ 
+ 
 # ---------------------------------------------------------------------------------------------
 # 4. Pergunta final: garantir que o diálogo socrático continue
 # ---------------------------------------------------------------------------------------------
@@ -351,7 +382,7 @@ def garantir_participantes(texto: str, participantes: str) -> str:
 _RE_META_PERGUNTA = re.compile(r"\b(?:fatos|rascunho|estudante|feedback)\b")
 # A pergunta é mostrada sozinha, sem a frase que o modelo escreveu antes dela: referências a esse contexto ficam sem sentido.
 _RE_REFERENCIA_SOLTA = re.compile(
-    r"\b(?:essa|esta|esse|este|nessa|nesta|nesse|neste)\s+(?:situacao|cenario|caso|exemplo|aplicacao)\b|\b(?:isso|isto|acima|anterior)\b"
+    r"\b(?:essa|esta|esse|este|nessa|nesta|nesse|neste)\s+(?:situacao|cenario|caso|exemplo|aplicacao)\b|\b(?:isso|isto|acima|anterior)\b|\bd(?:ess|est)[aeo]s?\b"
 )
  
  
@@ -394,14 +425,18 @@ def pergunta_valida(candidata: str, mensagem: str, texto: str = "") -> bool:
     return not (texto and n in normalizar(texto))
  
  
-def anexar_pergunta(texto: str, mensagem: str, rascunho_inquiridor: str, feitas: set, preferir_banco: bool = False) -> tuple:
-    """Garante que o texto termine com uma pergunta válida.
+def anexar_pergunta(texto: str, mensagem: str, rascunho_inquiridor: str, feitas: set, preferida: Pergunta = None) -> tuple:
+    """Garante que o texto termine com uma pergunta válida, sempre com a frase de introdução.
  
     Devolve (texto, pergunta_do_banco). pergunta_do_banco é None quando a pergunta veio do próprio
     modelo; quando veio do banco, traz o gabarito e a dica para a avaliação da próxima resposta.
-    preferir_banco=True ignora a pergunta do modelo (usado quando o código canônico foi anexado: a pergunta
-    do banco é sobre aquele código exato).
+ 
+    preferida: pergunta do banco já escolhida para este pedido (ver banco_perguntas.py). Quando existe, ela
+    vale e a pergunta do modelo nem é pedida: ela tem gabarito e dica, e combina com o que acabou de ser mostrado.
     """
+    if preferida is not None:
+        return f"{texto.rstrip()}\n\n{preferida.texto}".strip(), preferida
+ 
     ultima = extrair_pergunta(texto) if texto.rstrip().endswith("?") else ""
     if ultima:
         posicao = texto.rfind(ultima)
@@ -413,10 +448,10 @@ def anexar_pergunta(texto: str, mensagem: str, rascunho_inquiridor: str, feitas:
         if posicao >= 0:  # termina com '?', mas é um eco: tira
             texto = texto[:posicao].rstrip()
  
-    candidata = "" if preferir_banco else extrair_pergunta(rascunho_inquiridor)
+    candidata = extrair_pergunta(rascunho_inquiridor)
     if candidata and pergunta_valida(candidata, mensagem, texto):
         return f"{texto}\n\n{com_introducao(candidata)}".strip(), None
  
-    pergunta: Pergunta = escolher_pergunta(mensagem, feitas)
+    pergunta: Pergunta = escolher_pergunta(mensagem, feitas)  # o modelo não deu uma pergunta aproveitável
     return f"{texto}\n\n{pergunta.texto}".strip(), pergunta
  

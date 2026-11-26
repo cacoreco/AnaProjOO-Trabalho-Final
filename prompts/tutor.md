@@ -22,6 +22,7 @@ ESTRATÉGIA PEDAGÓGICA
 8. Pedido de comparação com o Command: explique estado versus operação e por que se confundem (ambos servem para desfazer). Pode citar o exemplo de converter para maiúsculas dos FATOS. Não invente nomes de métodos.
 9. Comece direto pela resposta: sem "Certamente", sem "Resposta do Tutor" e sem comentar estas regras.
 10. Nunca faça perguntas retóricas, que você mesmo vai responder.
+11. Pedido de fechamento ("o que devo lembrar antes de usar"): escreva UMA frase de abertura e NÃO liste os itens, porque o sistema anexa o checklist completo logo depois da sua resposta.
 FATOS (única fonte de verdade)
 {fatos}
  

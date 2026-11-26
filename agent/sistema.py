@@ -5,7 +5,7 @@ Fluxo de um turno:
   0. guardrails em Python: pedido inválido, cumprimento ou assunto fora do tema (guardrails.py)
     -> resposta fixa, sem chamar o modelo
   1. estudante fez uma pergunta/pedido novo:
-    -> Tutor -> Inquiridor
+    -> Tutor -> Inquiridor (o Inquiridor só escreve a pergunta se o banco de perguntas não tiver uma para o tema do pedido)
   2. estudante respondeu a uma pergunta nossa:
     -> Inquiridor recebe o gabarito e a dica, quando existem (uma pergunta nova feita logo depois de uma pergunta nossa volta para o fluxo 1)
   3. pós-processamento em Python (agent/pos_processamento.py):
@@ -13,7 +13,8 @@ Fluxo de um turno:
        -> verificar erros conhecidos; o Guardião (modelo) só é chamado se houver algum
        -> no pedido de exemplo, usar o código canônico dos FATOS
        -> no pedido conceitual, anexar a lista dos três participantes tirada dos FATOS
-       -> garantir que a resposta termine com uma pergunta válida (do Inquiridor ou do banco de perguntas),
+       -> no pedido "o que lembrar antes de usar", anexar o checklist tirado dos FATOS
+       -> garantir que a resposta termine com uma pergunta válida (do banco de perguntas ou, se não houver uma para o tema, do Inquiridor),
           sempre com a frase de introdução "Aqui vai uma pergunta para testar seus conhecimentos: ..."
 """
  
@@ -22,15 +23,19 @@ import logging
 from crewai import LLM, Agent, Crew, Process, Task
  
 from .prompts import carregar_fatos, carregar_prompt
+from .banco_perguntas import pergunta_do_tema, pergunta_por_palavra_chave
 from .guardrails import eh_novo_pedido, verificar_pedido, verificar_tema
 from .pos_processamento import (
     anexar_pergunta,
     eh_pedido_conceitual,
+    eh_pedido_de_checklist,
     eh_pedido_de_exemplo,
     eh_recusa,
+    extrair_checklist,
     extrair_codigo_canonico,
     extrair_participantes,
     extrair_pergunta,
+    garantir_checklist,
     garantir_codigo,
     garantir_participantes,
     limpar_saida,
@@ -75,13 +80,15 @@ class SistemaTutor:
         """
         Inicia o sistema de acordo com as opções especificadas. As opções saem dos argumentos da linha de comando
  
-        Também extrai dos FATOS o que o pós-processamento anexa às respostas: o exemplo em Java (pedidos de exemplo)
-        e a lista dos três participantes (pedidos conceituais). Assim esses trechos nunca dependem do modelo.
+        Também extrai dos FATOS o que o pós-processamento anexa às respostas: o exemplo em Java (pedidos de exemplo),
+        a lista dos três participantes (pedidos conceituais) e o checklist (pedidos de fechamento). Assim esses
+        trechos nunca dependem do modelo.
         """
  
         fatos = carregar_fatos()
         self._codigo_canonico = extrair_codigo_canonico(fatos)  # exemplo em Java dos FATOS, usado nos pedidos de exemplo
         self._participantes = extrair_participantes(fatos)      # lista dos 3 participantes dos FATOS, usada nos pedidos conceituais
+        self._checklist = extrair_checklist(fatos)              # checklist dos FATOS, usado nos pedidos "o que lembrar antes de usar"
         self._llm = LLM(
             model=model,
             base_url=base_url,
@@ -173,9 +180,17 @@ class SistemaTutor:
         for nome, tarefa in nomeadas:
             self.ultimos_rascunhos[nome] = self._saida_da_tarefa(tarefa)
  
-    def _explicar(self, pergunta: str) -> str:
+    def _explicar(self, pergunta: str, com_inquiridor: bool = True) -> str:
         """
         Fluxo 1: Tutor explica; Inquiridor escreve uma pergunta. Devolve o rascunho do Tutor.
+ 
+        Args:
+            pergunta (str): mensagem do estudante
+            com_inquiridor (bool): False quando a pergunta final vem do banco de perguntas; aí o Inquiridor
+                não é chamado (economiza uma chamada ao modelo)
+ 
+        Retorna:
+            str: rascunho do Tutor
         """
  
         # O texto é montado em Python (f-string), sem variáveis do CrewAI.
@@ -191,6 +206,11 @@ class SistemaTutor:
             "sem pergunta no final.",
             agent=self._tutor,
         )
+        if not com_inquiridor:
+            self._rodar([("tutor", t_tutor)])
+            self.ultimos_rascunhos["inquiridor"] = "(não chamado: a pergunta vem do banco de perguntas)"
+            return self.ultimos_rascunhos["tutor"]
+ 
         t_inquiridor = Task(
             description=contexto
             + "\nMODO PERGUNTAR: não há resposta do estudante para avaliar. NÃO escreva 'Feedback'. "
@@ -291,12 +311,15 @@ class SistemaTutor:
  
         Etapas de um turno:
             1. Entrada vazia ou longa demais é tratada; guardrails respondem sem chamar o modelo (pedido inválido, fora do tema).
-            2. O modelo gera o rascunho: Tutor e Inquiridor (pedido novo) ou só o Inquiridor (resposta do estudante).
+            2. O modelo gera o rascunho: Tutor (e Inquiridor, se o banco não tiver pergunta para o tema do pedido)
+               no pedido novo; só o Inquiridor, com gabarito e dica quando existem, na resposta do estudante.
             3. Recusa do modelo vira a mensagem padrão; texto que não fala do assunto é descartado.
             4. Revisão: o Guardião só é chamado se o verificador achar um erro conhecido.
-            5. Pedido de exemplo: o código Java vem dos FATOS. Pedido conceitual: a lista de participantes vem dos FATOS.
-            6. A resposta termina com uma pergunta, sempre com a frase de introdução. Com o código na tela, a pergunta
-               é a do banco sobre ele; se vier do banco, o gabarito e a dica ficam guardados para avaliar a resposta.
+            5. Pedido de exemplo: o código Java vem dos FATOS. Pedido conceitual: a lista de participantes vem dos
+               FATOS. Pedido "o que lembrar antes de usar": o checklist vem dos FATOS.
+            6. A resposta termina com uma pergunta, sempre com a frase de introdução. A pergunta é a do banco quando
+               o tema do pedido combina (com o código na tela, é o rastreio dele); senão, a do Inquiridor. Se vier
+               do banco, o gabarito e a dica ficam guardados para avaliar a resposta do estudante.
  
         Args:
             pergunta (str): prompt digitado pelo usuário
@@ -318,6 +341,13 @@ class SistemaTutor:
                 return bloqueio
  
             avaliar = self._estudante_esta_respondendo(pergunta)
+            com_codigo = not avaliar and eh_pedido_de_exemplo(pergunta) and bool(self._codigo_canonico)
+            if avaliar:
+                preferida = None                      # avaliação: a próxima pergunta vem do Inquiridor
+            elif com_codigo:                          # com o código na tela, a pergunta é o rastreio dele
+                preferida = pergunta_do_tema("traco")
+            else:                                     # tema do pedido combina com uma pergunta do banco? (None se não)
+                preferida = pergunta_por_palavra_chave(pergunta, self._perguntas_feitas)
  
             # guardrail: cumprimento ou assunto fora do tema. Não entra no histórico, para não
             # poluir o contexto do modelo e para que uma pergunta nossa ainda pendente continue valendo.
@@ -327,7 +357,7 @@ class SistemaTutor:
                 return fora_do_tema
  
             try:
-                bruto = self._avaliar(pergunta) if avaliar else self._explicar(pergunta)
+                bruto = self._avaliar(pergunta) if avaliar else self._explicar(pergunta, com_inquiridor=preferida is None)
             except Exception as erro:                 # tratamento: falha do modelo (Ollama fora do ar etc.)
                 log.warning("Falha na crew: %s", erro)
                 return f"{MSG_FALHA_MODELO}\n(Detalhe técnico: {str(erro)[:200]})"
@@ -344,17 +374,18 @@ class SistemaTutor:
                     return MSG_SAIDA_INVALIDA
  
             texto = self._revisar(texto, avaliando=avaliar)
-            com_codigo = not avaliar and eh_pedido_de_exemplo(pergunta) and bool(self._codigo_canonico)
             if com_codigo:                            # pedido de exemplo: o código é sempre o dos FATOS
                 texto = garantir_codigo(texto, self._codigo_canonico)
             if not avaliar and eh_pedido_conceitual(pergunta):  # pedido conceitual: a lista de participantes é a dos FATOS
                 texto = garantir_participantes(texto, self._participantes)
+            if not avaliar and eh_pedido_de_checklist(pergunta):  # fechamento: o checklist é o dos FATOS
+                texto = garantir_checklist(texto, self._checklist)
             if not self._saida_valida(texto):         # a revisão pode ter removido frases demais
                 return MSG_SAIDA_INVALIDA
  
             texto, do_banco = anexar_pergunta(
                 texto, pergunta, self.ultimos_rascunhos.get("inquiridor", ""), self._perguntas_feitas,
-                preferir_banco=com_codigo,            # com o código na tela, a pergunta é a do banco sobre ele
+                preferida=preferida,
             )
             self._pendente = do_banco                 # None: pergunta do próprio modelo, sem gabarito
             if do_banco is not None:

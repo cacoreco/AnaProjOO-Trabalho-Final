@@ -65,7 +65,7 @@ BANCO = (
         'escrever(" mundo") muda o texto para "Oi mundo"; recuperar() devolve o snapshot e restaurar() '
         'volta o texto para "Oi".',
         dica='Acompanhe o valor de texto linha a linha e repare que salvar() foi chamado ANTES de escrever(" mundo").',
-        palavras=("exemplo", "java", "codigo"),
+        palavras=("java", "codigo"),
     ),
     Pergunta(
         tema="command",
@@ -81,7 +81,7 @@ BANCO = (
         gabarito="Memento e Originator compartilhariam a MESMA referência ao objeto mutável; se o Originator "
         "alterasse a lista depois, o snapshot mudaria junto. Correção: copiar ao salvar E ao restaurar.",
         dica="Pense em duas variáveis apontando para o mesmo objeto mutável: o que acontece se uma delas o alterar?",
-        palavras=("errad", "incorret", "equivoc", "mutav", "copi"),
+        palavras=("errad", "incorret", "equivoc", "mutav", "copi", "lembrar", "antes de usar"),
     ),
     Pergunta(
         tema="evitar",
@@ -89,17 +89,41 @@ BANCO = (
         gabarito="Quando o estado é muito grande e salvo com muita frequência (custo de memória e de cópia); "
         "considerar o Command, que guarda só a operação e a inversa.",
         dica="Pense no que acontece com a memória se o texto inteiro de um arquivo grande for salvo a cada tecla.",
-        palavras=("evitar", "quando usar", "melhor escolha", "memoria", "lembrar", "antes de usar"),
+        palavras=("evitar", "quando usar", "melhor escolha", "memoria"),
     ),
 )
  
  
-def escolher_pergunta(mensagem: str, feitas: set) -> Pergunta:
-    """Escolhe a pergunta cujo tema combina com a mensagem; prefere as que ainda não foram feitas."""
+# Ordem da busca por palavra-chave: do tema mais específico para o mais genérico (um pedido de "uso equivocado" que
+# também diz "exemplo" tem de cair em "mutavel", não em "traco"). Sem palavra-chave, vale a ordem do BANCO.
+_ORDEM_DE_BUSCA = ("mutavel", "evitar", "command", "caretaker", "originator", "participantes", "traco")
+ 
+ 
+def _disponiveis(feitas: set) -> dict:
+    """Perguntas ainda não feitas nesta conversa (se todas já foram, recomeça com todas), na ordem do BANCO."""
+    return {p.tema: p for p in BANCO if p.tema not in feitas} or {p.tema: p for p in BANCO}
+ 
+ 
+def pergunta_por_palavra_chave(mensagem: str, feitas: set):
+    """Devolve a pergunta do banco cujo tema combina com o pedido do estudante, ou None se nenhuma combina.
+ 
+    Quando combina, o sistema usa esta pergunta (que tem gabarito e dica) em vez de pedir uma ao modelo.
+    """
     n = _normalizar(mensagem)
-    disponiveis = [p for p in BANCO if p.tema not in feitas] or list(BANCO)
-    for p in disponiveis:
-        if any(palavra in n for palavra in p.palavras):
+    disponiveis = _disponiveis(feitas)
+    for nome in _ORDEM_DE_BUSCA:
+        p = disponiveis.get(nome)
+        if p and any(palavra in n for palavra in p.palavras):
             return p
-    return disponiveis[0]
+    return None
+ 
+ 
+def pergunta_do_tema(tema: str) -> Pergunta:
+    """Devolve a pergunta de um tema (ex.: "traco", o rastreio do código canônico que está na tela)."""
+    return next(p for p in BANCO if p.tema == tema)
+ 
+ 
+def escolher_pergunta(mensagem: str, feitas: set) -> Pergunta:
+    """Pergunta do tema do pedido; se nenhum combina, a primeira ainda não feita (usada quando o modelo falha)."""
+    return pergunta_por_palavra_chave(mensagem, feitas) or next(iter(_disponiveis(feitas).values()))
  
