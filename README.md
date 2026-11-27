@@ -103,6 +103,7 @@ Acessar http://localhost:7860
 │   ├── __init__.py           # regras de importação
 │   ├── aux.py                # funções auxiliares
 │   ├── guardrails.py         # tratamento de prompts inválidos
+│   ├── avaliacao.py          # avalia as respostas do estudante
 │   ├── prompts.py            # lê os prompts e o arquivo de fatos
 │   └── sistema.py            # os três agentes, as tarefas e o tratamento de erros
 ├── cli/
