@@ -1,5 +1,5 @@
 # Verificações determinísticas (sem modelo) feitas ANTES de chamar a crew.
-
+ 
 """
 Por quê: nos testes, o Guardião (modelo de 3B) escolheu o texto de recusa errado
 (chegou a dizer que o Memento não existe). Pedidos inválidos previsíveis são
@@ -9,17 +9,17 @@ passaram a ser tratados aqui: o modelo respondia a eles repetindo a explicação
 Limitação: reconhece apenas formulações comuns; paráfrases incomuns passam para a crew,
 onde as regras anti-alucinação dos prompts continuam valendo.
 """
-
+ 
 import re
 import unicodedata
-
+ 
 CATALOGO_GOF = (
     "Abstract Factory", "Builder", "Factory Method", "Prototype", "Singleton",
     "Adapter", "Bridge", "Composite", "Decorator", "Facade", "Flyweight", "Proxy",
     "Chain of Responsibility", "Command", "Interpreter", "Iterator", "Mediator",
     "Memento", "Observer", "State", "Strategy", "Template Method", "Visitor",
 )
-
+ 
 # As mensagens fixas que não fazem uma pergunta ao estudante terminam sem "?": assim, a próxima
 # mensagem não é confundida com uma resposta a ser avaliada pelo Inquiridor.
 MSG_PADRAO_INEXISTENTE = (
@@ -27,36 +27,36 @@ MSG_PADRAO_INEXISTENTE = (
     "então não vou inventar uma explicação. Posso explicar o Memento, que existe no "
     "catálogo. Se quiser, pergunte: \"Qual problema o Memento resolve?\""
 )
-
+ 
 MSG_SAUDACAO = (
     "Olá! Sou um tutor do padrão de projeto Memento (GoF). Você pode perguntar, por exemplo: "
     "\"O que é o padrão Memento?\" ou \"Dê um exemplo do Memento em Java.\""
 )
-
+ 
 MSG_FORA_DO_TEMA = (
     "Esse assunto está fora do que eu ensino: só consigo ajudar com o padrão de projeto "
     "Memento (GoF). Você pode perguntar, por exemplo: \"Qual problema o Memento resolve?\""
 )
-
+ 
 MSG_SOLUCAO_PRONTA = (
     "Prefiro não entregar a solução pronta, porque você aprende mais construindo. "
     "Vamos por partes: no Editor com desfazer, quem guarda o estado anterior e quem "
     "pode ler o conteúdo guardado?"
 )
-
+ 
 FRASES_SOLUCAO_PRONTA = (
     "codigo pronto", "solucao pronta", "solucao completa", "resposta pronta",
     "resolva para mim", "resolva por mim", "faca por mim", "faca tudo por mim",
     "implemente tudo", "gabarito",
 )
-
+ 
 # Mensagens que são só cumprimento ou teste (comparadas com o texto inteiro, sem pontuação).
 SAUDACOES = {
     "oi", "ola", "opa", "eai", "e ai", "hey", "hello", "hi", "teste", "testando", "test",
     "bom dia", "boa tarde", "boa noite", "tudo bem", "oi tudo bem", "ola tudo bem",
     "tudo bom", "oi tudo bom", "ola tudo bom", "alo",
 }
-
+ 
 # Prefixos de palavras do assunto (padrões de projeto, OO e o exemplo do Editor).
 # Basta UMA palavra da mensagem começar com um deles para ela ser considerada do tema.
 RADICAIS_DO_TEMA = (
@@ -71,7 +71,7 @@ RADICAIS_DO_TEMA = (
     "intencao", "estrutura", "narrow", "wide", "estreita", "larga", "opaco", "checkpoint",
     "versao", "backup", "rollback", "transac", "ctrl",
 )
-
+ 
 # Palavras genéricas, que aparecem em pedidos de continuação ("dê um exemplo", "não entendi")
 # e em respostas curtas ("não sei"). Sozinhas, não indicam que a mensagem é de outro assunto.
 PALAVRAS_GENERICAS = {
@@ -98,30 +98,34 @@ PALAVRAS_GENERICAS = {
     "desvantagens", "problema", "problemas", "resolve", "resolver", "pratica", "real",
     "caso", "casos", "situacao", "situacoes", "ensine", "ensina", "conceito", "teoria",
 }
-
+ 
 # Começos típicos de uma pergunta ou pedido NOVO (e não da resposta a uma pergunta do Sistema).
 _RE_NOVO_PEDIDO = re.compile(
     r"^(?:e\s+|mas\s+|agora\s+|entao\s+)?(?:me\s+|nos\s+)?"
     r"(?:(?:de|da|dar)\s+(?:um|uma|exemplo|exemplos|mais|outro|outra)|explique|explica|explicar|mostre|mostra|fale|fala|descreva|compare|"
     r"defina|cite|liste|resuma|exemplifique|ensine|ensina|crie|escreva|faca|gere|"
-    r"implemente|como|o que|oque|qual|quais|quando|onde|quem|por que|porque|pq|"
+    r"implemente|apresente|diga|conte|entregue|invente|"
+    r"como|o que|oque|qual|quais|quando|onde|por que|porque|pq|"  # "quem" fica de fora: "Quem guarda é o Memento..." é resposta
+    r"com qual|com quais|com que|em qual|em quais|em que|para qual|para que|por qual|de qual|a qual|"
+    r"existe|ha|devo|posso|deveria|e possivel|se eu|"
     r"quero|queria|gostaria|pode|poderia|voce pode|vc pode|preciso|tem como)\b"
 )
-
+ 
+ 
 def _normalizar(texto: str) -> str:
     """
     Minúsculas e sem acentos, para comparar sem se preocupar com grafia.
-
+ 
     Args:
         texto(str): texto bruto
-    
+ 
     Retorna:
         str: texto sem acentos e capitalização
     """
-
+ 
     decomposto = unicodedata.normalize("NFD", texto)
     return "".join(c for c in decomposto if unicodedata.category(c) != "Mn").lower()
-
+ 
 _CATALOGO_NORMALIZADO = {_normalizar(nome) for nome in CATALOGO_GOF}
  
 # "padrão chamado Z", "padrão denominado Super Observer", "padrão chamado Chain of Responsibility"
@@ -129,10 +133,10 @@ _RE_NOME_PADRAO = re.compile(
     r"(?i:padr[ãa]o\s+(?:chamado|denominado|intitulado|de nome|conhecido como))"
     r"\s+[\"“‘']?(\w[\w\-]*(?:\s+(?:of|[A-ZÀ-Ý]\w*))*)"
 )
-
+ 
 # "invente um padrão", "invente outro padrão novo" (e não "invente um exemplo do padrão")
 _RE_INVENTAR_PADRAO = re.compile(r"\binvent\w*\s+(?:um\s+|uma\s+|o\s+|outro\s+|novo\s+)*padr")
-
+ 
 # "padrão Tung Tung Sahur", "design pattern Foo", "padrão de projeto Foo": se o nome vem com inicial
 # maiúscula e não é do catálogo, o pedido é sobre um padrão que não existe. Antes, essas formulações
 # ("padrão X" em vez de "padrão chamado X") passavam para a crew e dependiam só do modelo.
@@ -140,27 +144,27 @@ _RE_PADRAO_COM_NOME = re.compile(
     r"(?i:\b(?:padr[ãa]o(?:\s+de\s+projeto)?|design\s+pattern|pattern))\s+"
     r"([A-ZÀ-Ý]\w*(?:\s+(?:of|[A-ZÀ-Ý]\w*))*)"
 )
-
+ 
 # Palavras com inicial maiúscula que aparecem depois de "padrão" mas não são o nome de um padrão.
 _NAO_SAO_NOME_DE_PADRAO = {
     "gof", "java", "python", "uml", "poo", "oo", "gang", "originator", "caretaker", "editor", "estadoeditor", "historico",
 }
-
+ 
 def _nome_existe(nome: str) -> bool:
     """
     Retorna True se o nome especificado existe no catálogo
     """
-
+ 
     n = _normalizar(nome).strip()
     return n in _CATALOGO_NORMALIZADO or (
         len(n) >= 4 and any(c.startswith(n) for c in _CATALOGO_NORMALIZADO)
     )
-
+ 
 def _nome_de_padrao_valido(nome: str) -> bool:
     """
     Retorna True se o nome (ou a sua primeira palavra, como em "Memento Java") é do catálogo ou não é um nome de padrão.
     """
-
+ 
     primeira = _normalizar(nome.split()[0])
     return _nome_existe(nome) or _nome_existe(primeira) or primeira in _NAO_SAO_NOME_DE_PADRAO
  
@@ -168,7 +172,7 @@ def verificar_pedido(texto: str):
     """
     Devolve a resposta fixa se o pedido for inválido; devolve None se pode seguir para a crew.
     """
-
+ 
     achado = _RE_NOME_PADRAO.search(texto)
     if achado and not _nome_existe(achado.group(1)):
         return MSG_PADRAO_INEXISTENTE.format(nome=achado.group(1).strip())
@@ -185,19 +189,22 @@ def verificar_pedido(texto: str):
     if any(frase in norm for frase in FRASES_SOLUCAO_PRONTA):
         return MSG_SOLUCAO_PRONTA
     return None
-
+ 
 def _palavras(texto: str) -> list:
     return re.findall(r"[a-z0-9]+", _normalizar(texto))
-
+ 
 def eh_novo_pedido(texto: str) -> bool:
     """
-    Retorna True se a mensagem é uma pergunta ou pedido novo (termina com '?' ou começa como pedido).
+    Retorna True se a mensagem é uma pergunta ou pedido novo (tem '?' ou começa como pedido).
+ 
+    Errar para este lado é barato (o Tutor explica); errar para o outro lado trata um pedido como resposta a uma
+    pergunta nossa e o Inquiridor tenta avaliá-lo.
     """
-
-    if texto.rstrip().endswith("?"):
+ 
+    if "?" in texto:  # em qualquer posição: o roteiro tem perguntas que terminam em ponto ("Com qual padrão...? Explique...")
         return True
     return bool(_RE_NOVO_PEDIDO.match(" ".join(_palavras(texto))))
-
+ 
 def verificar_tema(texto: str, respondendo: bool):
     """
     Devolve a resposta fixa para cumprimentos e assuntos fora do tema; None se pode seguir.
@@ -206,7 +213,7 @@ def verificar_tema(texto: str, respondendo: bool):
     (que não seja um pedido novo) sempre vai para o Inquiridor, mesmo sem palavras do tema
     ("não sei", "acho que a pilha"), porque avaliar respostas fracas faz parte do diálogo.
     """
-
+ 
     palavras = _palavras(texto)
     if " ".join(palavras) in SAUDACOES:
         return MSG_SAUDACAO
@@ -216,5 +223,6 @@ def verificar_tema(texto: str, respondendo: bool):
         return None
     if all(p in PALAVRAS_GENERICAS or len(p) <= 2 for p in palavras):
         return None  # pedido de continuação ("dê um exemplo", "não entendi"): depende do histórico
-
+ 
     return MSG_FORA_DO_TEMA
+ 

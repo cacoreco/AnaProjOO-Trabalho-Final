@@ -22,6 +22,16 @@ class Pergunta:
     gabarito: str
     dica: str
     palavras: tuple = ()  # trechos (sem acento) que, se aparecerem na mensagem, escolhem esta pergunta
+    # Avaliação da resposta do estudante (ver avaliacao.py). Todos os trechos são expressões regulares sobre o texto
+    # sem acento, sem aspas e em minúsculas. criterios: grupos de alternativas; cada grupo com uma alternativa
+    # presente conta um acerto. erros: padrões que indicam uma resposta errada mesmo que os critérios apareçam.
+    criterios: tuple = ()
+    erros: tuple = ()
+ 
+    @property
+    def corpo(self) -> str:
+        """A pergunta sem a frase de introdução (usada quando o estudante tenta de novo)."""
+        return self.texto[len(PREFIXO):] if self.texto.startswith(PREFIXO) else self.texto
  
  
 BANCO = (
@@ -33,6 +43,8 @@ BANCO = (
         "mementos; o Originator (Editor) é o único que lê o conteúdo do Memento.",
         dica="Pense em quem é dono do texto private do Editor e em quem só enxerga uma interface vazia.",
         palavras=("o que e", "participante"),
+        criterios=(('originator', 'editor'), ('caretaker', 'historico'), ('memento', 'estadoeditor', 'snapshot')),
+        erros=(),
     ),
     Pergunta(
         tema="caretaker",
@@ -41,6 +53,8 @@ BANCO = (
         "conteúdo, porque a interface do Memento que ele enxerga é vazia.",
         dica="Olhe a interface Memento dentro do Editor: ela tem algum método?",
         palavras=("caretaker", "historico", "zelador"),
+        criterios=(('guarda', 'guardar', 'armazena', 'devolve', 'devolver', 'pilha'), ('nao le', 'nao pode ler', 'nunca le', 'nao altera', 'nao modifica', 'nao acessa', 'nao abre', 'sem ler', 'so guarda', 'apenas guarda', 'vazia', 'opac')),
+        erros=(),
     ),
     Pergunta(
         tema="originator",
@@ -48,6 +62,8 @@ BANCO = (
         gabarito="O Originator (Editor), no método restaurar, onde faz o cast para EstadoEditor para ler o texto.",
         dica="Procure no código do Editor onde aparece o cast ((EstadoEditor) m).",
         palavras=("originator", "originador"),
+        criterios=(('originator', 'editor'), ('restaur', 'cast')),
+        erros=(),
     ),
     Pergunta(
         tema="traco",
@@ -66,6 +82,8 @@ BANCO = (
         'volta o texto para "Oi".',
         dica='Acompanhe o valor de texto linha a linha e repare que salvar() foi chamado ANTES de escrever(" mundo").',
         palavras=("java", "codigo"),
+        criterios=(('\\boi\\b',),),
+        erros=('(?<!nao )(?<!nunca )oi\\s+mundo[\\s.)!]*$',),
     ),
     Pergunta(
         tema="command",
@@ -73,6 +91,8 @@ BANCO = (
         gabarito="O Memento guarda o ESTADO; o Command guarda a OPERAÇÃO (e precisa conhecer a operação inversa).",
         dica="Pense no que cada um precisa guardar para desfazer: o estado anterior, ou a operação e a sua inversa?",
         palavras=("command", "comando", "confund", "diferenca"),
+        criterios=(('estado', 'snapshot'), ('operac', 'comando', 'inversa', 'acao')),
+        erros=(),
     ),
     Pergunta(
         tema="mutavel",
@@ -82,6 +102,8 @@ BANCO = (
         "alterasse a lista depois, o snapshot mudaria junto. Correção: copiar ao salvar E ao restaurar.",
         dica="Pense em duas variáveis apontando para o mesmo objeto mutável: o que acontece se uma delas o alterar?",
         palavras=("errad", "incorret", "equivoc", "mutav", "copi", "lembrar", "antes de usar"),
+        criterios=(('referencia', 'mesm[oa]\\s+(?:objeto|lista|referencia)', 'compartilh', 'aponta'), ('muda', 'altera', 'modific', 'junto', 'afeta')),
+        erros=(),
     ),
     Pergunta(
         tema="evitar",
@@ -90,6 +112,8 @@ BANCO = (
         "considerar o Command, que guarda só a operação e a inversa.",
         dica="Pense no que acontece com a memória se o texto inteiro de um arquivo grande for salvo a cada tecla.",
         palavras=("evitar", "quando usar", "melhor escolha", "memoria"),
+        criterios=(('grande', 'frequen', 'memoria'), ('command', 'comando')),
+        erros=(),
     ),
 )
  
@@ -97,6 +121,27 @@ BANCO = (
 # Ordem da busca por palavra-chave: do tema mais específico para o mais genérico (um pedido de "uso equivocado" que
 # também diz "exemplo" tem de cair em "mutavel", não em "traco"). Sem palavra-chave, vale a ordem do BANCO.
 _ORDEM_DE_BUSCA = ("mutavel", "evitar", "command", "caretaker", "originator", "participantes", "traco")
+ 
+ 
+# A mensagem fixa de "solução pronta" (guardrails.py) termina com esta pergunta. Ela não está no BANCO (não é sorteada),
+# mas o sistema a registra como pendente: a próxima mensagem do estudante é a resposta DELA, não da pergunta anterior.
+PERGUNTA_SOLUCAO_PRONTA = Pergunta(
+    tema="solucao_pronta",
+    texto="no Editor com desfazer, quem guarda o estado anterior e quem pode ler o conteúdo guardado?",
+    gabarito="O Memento (EstadoEditor) guarda o snapshot do estado anterior (e o Caretaker, o Historico, guarda os "
+    "mementos); só o Originator (Editor) pode ler o conteúdo do Memento.",
+    dica="Pense em quem recebe o snapshot do texto e em quem é o único que enxerga o que há dentro dele.",
+    criterios=(("memento", "estadoeditor", "snapshot", "historico", "caretaker"), ("originator", "editor")),
+)
+ 
+ 
+def proxima_pergunta(feitas: set, atual: str = None, com_codigo: bool = False) -> Pergunta:
+    """A próxima pergunta do banco (na ordem do BANCO) que ainda não foi feita.
+ 
+    O rastreio do código ("traco") só entra se o código canônico já apareceu na conversa.
+    """
+    candidatas = [p for p in BANCO if p.tema != atual and (com_codigo or p.tema != "traco")]
+    return next((p for p in candidatas if p.tema not in feitas), candidatas[0])
  
  
 def _disponiveis(feitas: set) -> dict:

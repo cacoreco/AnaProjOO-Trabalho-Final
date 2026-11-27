@@ -117,7 +117,9 @@ _REGRAS = (
         "caretaker_le",
         "Está errado: o Caretaker NUNCA lê nem altera o conteúdo do Memento; só guarda e devolve.",
         re.compile(
-            r"caretaker\b(?:(?!originator)[^.!?]){0,60}?\b(?:le|ler|acessa|acessar|altera|alterar|abre|abrir|modifica|modificar)\b"
+            r"caretaker\b(?:(?!originator|editor)[^.!?]){0,60}?\b(?:le|ler|acessa|acessar|altera|alterar|abre|abrir|modifica|modificar)\b"
+            # ordem inversa: "Quem lê o conteúdo do Memento é o Caretaker" (sem vírgula nem Originator no meio)
+            r"|\bquem\s+(?:pode\s+)?(?:le|ler|acessa|acessar|abre|abrir)\b(?:(?!originator|editor)[^.!?;,]){0,40}?\b(?:e|seria)\s+(?:o\s+)?(?:caretaker|historico)\b"
         ),
         True, True,
     ),
@@ -133,7 +135,7 @@ _REGRAS = (
     _Regra(
         "caretaker_salva_restaura",
         "Está errado: salvar e restaurar são métodos do Originator; o Caretaker só guarda e devolve mementos.",
-        re.compile(r"caretaker\b(?:(?!originator)[^.!?]){0,60}?\b(?:salva|restaura|salvar|restaurar)\w*"),
+        re.compile(r"caretaker\b(?:(?!originator|editor)[^.!?]){0,60}?\b(?:salva|restaura|salvar|restaurar)\w*"),
         True, True,
     ),
     _Regra(
