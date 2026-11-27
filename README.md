@@ -102,8 +102,10 @@ Acessar http://localhost:7860
 ├── agent/
 │   ├── __init__.py           # regras de importação
 │   ├── aux.py                # funções auxiliares
-│   ├── guardrails.py         # tratamento de prompts inválidos
 │   ├── avaliacao.py          # avalia as respostas do estudante
+│   ├── banco_perguntas.py    # perguntas do inquiridor
+│   ├── guardrails.py         # tratamento de prompts inválidos
+│   ├── pos_processamento.py  # verificação das respostas após a resposta do modelo
 │   ├── prompts.py            # lê os prompts e o arquivo de fatos
 │   └── sistema.py            # os três agentes, as tarefas e o tratamento de erros
 ├── cli/
